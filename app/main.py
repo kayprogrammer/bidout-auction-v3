@@ -1,13 +1,13 @@
-from starlite import Starlite, TemplateConfig, get
+from starlite import Starlite, TemplateConfig, get, Provide
 from starlite import OpenAPIConfig, OpenAPIController
 from app.core.config import settings
+from app.core.database import get_db
 
 from pydantic import ValidationError
 from starlite.contrib.jinja import JinjaTemplateEngine
 
 from pathlib import Path
-from app.core import database
-
+from app.api.routers import all_routers
 
 class MyOpenAPIController(OpenAPIController):
     path = "/"
@@ -29,9 +29,10 @@ def create_app() -> Starlite:
     )
 
     app = Starlite(
-        route_handlers=[],
+        route_handlers=all_routers,
         openapi_config=openapi_config,
         template_config=template_config,
+        dependencies = {"db": Provide(get_db)}
     )
     return app
 

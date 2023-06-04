@@ -35,16 +35,16 @@ class BaseManager(Generic[ModelType]):
     def get_by_slug(self, db: AsyncSession, slug: str) -> Optional[ModelType]:
         return db.query(self.model).filter_by(slug=slug).first()
 
-    def create(
+    async def create(
         self, db: AsyncSession, obj_in: Optional[ModelType] = {}
     ) -> Optional[ModelType]:
         obj_in["created_at"] = datetime.utcnow()
         obj_in["updated_at"] = obj_in["created_at"]
-        obj: self.model = obj_in.to_model_instance()
+        obj = self.model(**obj_in)
 
         db.add(obj)
-        db.commit()
-        db.refresh(obj)
+        await db.commit()
+        await db.refresh(obj)
         return obj
 
     def bulk_create(self, db: AsyncSession, obj_in: list) -> Optional[bool]:
