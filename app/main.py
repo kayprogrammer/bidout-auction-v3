@@ -1,13 +1,13 @@
-from starlite import Starlite, TemplateConfig, get, Provide
-from starlite import OpenAPIConfig, OpenAPIController
-from app.core.config import settings
-from app.core.database import get_db
-
-from pydantic import ValidationError
+from starlite import Starlite, TemplateConfig, get, Provide, OpenAPIConfig, OpenAPIController, HTTPException, ValidationException
+from starlite.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 from starlite.contrib.jinja import JinjaTemplateEngine
 
-from pathlib import Path
+from app.core.config import settings
+from app.core.database import get_db
+from app.common.exception_handlers import validation_exception_handler, http_exception_handler, internal_server_error_handler
 from app.api.routers import all_routers
+
+from pathlib import Path
 
 class MyOpenAPIController(OpenAPIController):
     path = "/"
@@ -32,7 +32,12 @@ def create_app() -> Starlite:
         route_handlers=all_routers,
         openapi_config=openapi_config,
         template_config=template_config,
-        dependencies = {"db": Provide(get_db)}
+        dependencies = {"db": Provide(get_db)},
+        exception_handlers={
+            ValidationException: validation_exception_handler,
+            HTTPException: http_exception_handler,
+            HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler
+        },
     )
     return app
 
