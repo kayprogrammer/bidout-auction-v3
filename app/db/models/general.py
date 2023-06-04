@@ -9,13 +9,12 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID as GUUID  # General UUID
 from .base import BaseModel
-from pydantic import EmailStr
 
 class SiteDetail(BaseModel):
     __tablename__ = "sitedetails"
 
     name: Mapped[str] = Column(String(300), default="Kay's Auction House")
-    email: Mapped[EmailStr] = Column(String(300), default="kayprogrammer1@gmail.com")
+    email: Mapped[str] = Column(String(300), default="kayprogrammer1@gmail.com")
     phone: Mapped[str] = Column(String(300), default="+2348133831036")
     address: Mapped[str] = Column(String(300), default="234, Lagos, Nigeria")
     fb: Mapped[str] = Column(String(300), default="https://facebook.com")
@@ -33,7 +32,7 @@ class SiteDetail(BaseModel):
 class Subscriber(BaseModel):
     __tablename__ = "subscribers"
 
-    email: Mapped[EmailStr] = Column(String, unique=True)
+    email: Mapped[str] = Column(String, unique=True)
     exported: Mapped[bool] = Column(Boolean, default=False)
 
     def __repr__(self):

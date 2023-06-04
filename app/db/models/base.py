@@ -22,12 +22,15 @@ class File(BaseModel):
     __tablename__ = "files"
 
     resource_type: Mapped[str] = Column(String)
-    # user_avatar = relationship(
-    #     "User", foreign_keys="User.avatar_id", back_populates="avatar", uselist=False
-    # )
+    user_avatar: Mapped["User"] = relationship(
+        "User", foreign_keys="User.avatar_id", back_populates="avatar", uselist=False
+    )
     # listing_image = relationship(
     #     "Listing",
     #     foreign_keys="Listing.image_id",
     #     back_populates="image",
     #     uselist=False,
     # )
+
+class GuestUser(BaseModel):
+    __tablename__ = "guestusers"

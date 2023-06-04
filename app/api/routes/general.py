@@ -1,4 +1,4 @@
-from starlite import Controller, Provide, get, post
+from starlite import Controller, Provide, get, post, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.api.schemas.general import (
@@ -15,6 +15,8 @@ from app.db.managers.general import (
     subscriber_manager,
     # review_manager,
 )
+
+from typing import Any
 
 class SiteDetailView(Controller):
     path = "/site-detail"
