@@ -15,7 +15,13 @@ sqlalchemy_plugin = SQLAlchemyPlugin(config=sqlalchemy_config)
 
 Base = declarative_base()
 
-AsyncSessionLocal = sessionmaker(bind=sqlalchemy_config.engine, class_=AsyncSession, autocommit=False, autoflush=False)
+AsyncSessionLocal = sessionmaker(
+    bind=sqlalchemy_config.engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+)
+
 
 async def get_db():
     db = AsyncSessionLocal()

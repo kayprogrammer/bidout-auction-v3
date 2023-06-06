@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Optional
 from starlite import HTTPException, ValidationException, Response, Request, status_codes
 
+
 class Error(Exception):
     """Base class for exceptions in this module."""
 
@@ -9,9 +10,7 @@ class Error(Exception):
 
 
 class RequestError(Error):
-    def __init__(
-        self, status_code: int, error_msg: Optional[str] = None
-    ):
+    def __init__(self, status_code: int, error_msg: Optional[str] = None):
         self.status_code = HTTPStatus(status_code)
         self.error_msg = error_msg
 
@@ -27,21 +26,20 @@ class RequestErrorHandler:
             content={
                 "status": "failure",
                 "message": self.error_msg,
-            }
+            },
         )
 
 
 def http_exception_handler(request: Request, exc: HTTPException) -> Response:
     return Response(
-        content={
-            "status": "failure", 
-            "message": exc.detail
-        },
+        content={"status": "failure", "message": exc.detail},
         status_code=exc.status_code,
     )
 
 
-def validation_exception_handler(request: Request, exc: ValidationException) -> Response:
+def validation_exception_handler(
+    request: Request, exc: ValidationException
+) -> Response:
     # Get the original 'detail' list of errors
     details = exc.extra
     modified_details = {}
@@ -57,9 +55,10 @@ def validation_exception_handler(request: Request, exc: ValidationException) -> 
         content={
             "status": "failure",
             "message": "Invalid Entry",
-            "data": modified_details
+            "data": modified_details,
         },
     )
+
 
 def internal_server_error_handler(request: Request, exc: Exception) -> Response:
     print(exc)

@@ -1,9 +1,10 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from .base import BaseManager
-from app.db.models.general import SiteDetail, Subscriber
+from app.db.models.general import SiteDetail, Subscriber, Review
+
 
 class SiteDetailManager(BaseManager[SiteDetail]):
     async def get(self, db: AsyncSession) -> Optional[SiteDetail]:
@@ -17,20 +18,26 @@ class SiteDetailManager(BaseManager[SiteDetail]):
 
 class SubscriberManager(BaseManager[Subscriber]):
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[Subscriber]:
-        subscriber = await db.execute(select(self.model).where(self.model.email == email))
+        subscriber = await db.execute(
+            select(self.model).where(self.model.email == email)
+        )
         return subscriber.scalar_one_or_none()
 
 
-# class ReviewManager(BaseManager[Review]):
-#     def get_active(self, db: Session) -> Optional[Review]:
-#         reviews = db.query(self.model).filter_by(show=True).all()
-#         return reviews
+class ReviewManager(BaseManager[Review]):
+    async def get_active(self, db: AsyncSession) -> Optional[Review]:
+        reviews = await db.execute(select(self.model).where(self.model.show == True))
+        return reviews.scalars().all()
 
-#     def get_count(self, db: Session) -> Optional[int]:
-#         reviews_count = db.query(self.model).filter_by(show=True).count()
-#         return reviews_count
+    async def get_count(self, db: AsyncSession) -> Optional[int]:
+        count = await db.execute(
+            select(func.count()).select_from(
+                select(self.model).where(self.model.show == True)
+            )
+        )
+        return count.scalar_one()
 
 
 sitedetail_manager = SiteDetailManager(SiteDetail)
 subscriber_manager = SubscriberManager(Subscriber)
-# review_manager = ReviewManager(Review)
+review_manager = ReviewManager(Review)

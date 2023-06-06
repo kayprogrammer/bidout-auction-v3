@@ -1,9 +1,9 @@
-from pydantic import BaseModel, validator, Field, EmailStr
-from typing import Optional, List
-from uuid import UUID
+from pydantic import validator, Field, EmailStr
+from typing import Optional, List, Any
 
 from app.api.utils.file_processors import FileProcessor
-from .base import ResponseSchema
+from .base import BaseModel, ResponseSchema
+from uuid import UUID
 
 
 # Site Details
@@ -45,30 +45,21 @@ class SubscriberResponseSchema(ResponseSchema):
 
 # Reviews
 class ReviewsDataSchema(BaseModel):
-    reviewer_id: UUID = Field(..., example="Ignore this")
-    reviewer: Optional[dict] = Field(
+    reviewer: Optional[Any] = Field(
         None, example={"name": "John Doe", "avatar": "https://image.url"}
     )
     text: str
 
-    @validator("reviewer", always=True)
-    def show_reviewer(cls, v, values):
-        db = SessionLocal()
-        reviewer_id = values.get("reviewer_id")
-        reviewer = user_manager.get_by_id(db, reviewer_id)
-        values.pop("reviewer_id", None)
-        if reviewer:
-            avatar = None
-            if reviewer.avatar_id:
-                avatar = FileProcessor.generate_file_url(
-                    key=reviewer.avatar_id,
-                    folder="reviewers",
-                    content_type=reviewer.avatar.resource_type,
-                )
-            db.close()
-            return {"name": reviewer.full_name(), "avatar": avatar}
-        db.close()
-        return v
+    @validator("reviewer")
+    def show_reviewer(cls, v):
+        avatar = None
+        if v.avatar_id:
+            avatar = FileProcessor.generate_file_url(
+                key=v.avatar_id,
+                folder="reviewers",
+                content_type=v.avatar.resource_type,
+            )
+        return {"name": v.full_name, "avatar": avatar}
 
     class Config:
         orm_mode = True

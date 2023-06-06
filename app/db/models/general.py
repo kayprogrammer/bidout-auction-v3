@@ -1,14 +1,11 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    ForeignKey,
-    String,
-)
-from sqlalchemy.orm import Mapped
+from sqlalchemy import Boolean, Column, ForeignKey, String
+from sqlalchemy.orm import Mapped, relationship
 
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID as GUUID  # General UUID
 from .base import BaseModel
+from .accounts import User
+
 
 class SiteDetail(BaseModel):
     __tablename__ = "sitedetails"
@@ -39,15 +36,17 @@ class Subscriber(BaseModel):
         return self.email
 
 
-# class Review(BaseModel):
-#     __tablename__ = "reviews"
+class Review(BaseModel):
+    __tablename__ = "reviews"
 
-#     reviewer_id: Mapped[GUUID] = Column(
-#         UUID(as_uuid=True),
-#         ForeignKey("users.id", ondelete="CASCADE"),
-#     )
-#     show: Mapped[bool] = Column(Boolean, default=False)
-#     text: Mapped[str] = Column(String(200))
+    reviewer_id: Mapped[GUUID] = Column(
+        UUID(),
+        ForeignKey("users.id", ondelete="CASCADE"),
+    )
+    reviewer: Mapped[User] = relationship("User", lazy="joined")
 
-#     def __repr__(self):
-#         return self.reviewer_id
+    show: Mapped[bool] = Column(Boolean, default=False)
+    text: Mapped[str] = Column(String(200))
+
+    def __repr__(self):
+        return str(self.reviewer_id)

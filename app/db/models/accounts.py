@@ -11,10 +11,8 @@ from sqlalchemy.orm import relationship, Mapped
 from .base import BaseModel, File
 from datetime import datetime
 from app.core.config import settings
-# from app.db.models.listings import WatchList
 
 from uuid import UUID as GUUID  # General UUID
-
 
 
 class User(BaseModel):
@@ -31,13 +29,11 @@ class User(BaseModel):
     terms_agreement: Mapped[bool] = Column(Boolean(), default=False)
 
     avatar_id: Mapped[GUUID] = Column(
-        UUID(as_uuid=True),
+        UUID(),
         ForeignKey("files.id", ondelete="CASCADE"),
         unique=True,
     )
-    avatar: Mapped[File] = relationship(
-        "File", foreign_keys=[avatar_id], back_populates="user_avatar"
-    )
+    avatar: Mapped[File] = relationship("File", lazy="joined")
 
     jwt: Mapped["Jwt"] = relationship(
         "Jwt",
@@ -55,10 +51,7 @@ class User(BaseModel):
         uselist=False,
     )
 
-    # user_watchlists: Mapped[str] = relationship(
-    #     "WatchList", foreign_keys="WatchList.user_id", back_populates="user"
-    # )
-
+    @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
@@ -69,11 +62,13 @@ class User(BaseModel):
 class Jwt(BaseModel):
     __tablename__ = "jwts"
     user_id: Mapped[GUUID] = Column(
-        UUID(as_uuid=True),
+        UUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
     )
-    user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="jwt")
+    user: Mapped[User] = relationship(
+        "User", foreign_keys=[user_id], back_populates="jwt", lazy="joined"
+    )
     access: Mapped[str] = Column(String())
     refresh: Mapped[str] = Column(String())
 
@@ -84,11 +79,13 @@ class Jwt(BaseModel):
 class Otp(BaseModel):
     __tablename__ = "otps"
     user_id: Mapped[GUUID] = Column(
-        UUID(as_uuid=True),
+        UUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
     )
-    user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="otp")
+    user: Mapped[User] = relationship(
+        "User", foreign_keys=[user_id], back_populates="otp", lazy="joined"
+    )
     code: Mapped[int] = Column(Integer())
 
     def __repr__(self):

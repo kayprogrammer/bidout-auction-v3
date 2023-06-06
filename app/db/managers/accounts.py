@@ -14,12 +14,12 @@ class UserManager(BaseManager[User]):
         user = await db.execute(select(self.model).where(self.model.email == email))
         return user.scalar_one_or_none()
 
-    async def create(self, db: AsyncSession , obj_in) -> User:
+    async def create(self, db: AsyncSession, obj_in) -> User:
         # hash the password
         obj_in.update({"password": get_password_hash(obj_in["password"])})
         return await super().create(db, obj_in)
 
-    async def update(self, db: AsyncSession , db_obj: User, obj_in) -> Optional[User]:
+    async def update(self, db: AsyncSession, db_obj: User, obj_in) -> Optional[User]:
         # hash the password
         password = obj_in.get("password")
         if password:
@@ -28,11 +28,11 @@ class UserManager(BaseManager[User]):
 
 
 class OtpManager(BaseManager[Otp]):
-    async def get_by_user_id(self, db: AsyncSession , user_id: UUID) -> Optional[Otp]:
+    async def get_by_user_id(self, db: AsyncSession, user_id: UUID) -> Optional[Otp]:
         otp = await db.execute(select(self.model).where(self.model.user_id == user_id))
         return otp.scalar_one_or_none()
 
-    async def create(self, db: AsyncSession , obj_in) -> Optional[Otp]:
+    async def create(self, db: AsyncSession, obj_in) -> Optional[Otp]:
         code = random.randint(100000, 999999)
         obj_in.update({"code": code})
         existing_otp = await self.get_by_user_id(db, obj_in["user_id"])
@@ -42,17 +42,18 @@ class OtpManager(BaseManager[Otp]):
 
 
 class JwtManager(BaseManager[Jwt]):
-    async def get_by_user_id(self, db: AsyncSession , user_id: str) -> Optional[Jwt]:
+    async def get_by_user_id(self, db: AsyncSession, user_id: str) -> Optional[Jwt]:
         jwt = await db.execute(select(self.model).where(self.model.user_id == user_id))
         return jwt.scalar_one_or_none()
 
-    async def get_by_refresh(self, db: AsyncSession , refresh: str) -> Optional[Jwt]:
+    async def get_by_refresh(self, db: AsyncSession, refresh: str) -> Optional[Jwt]:
         jwt = await db.execute(select(self.model).where(self.model.refresh == refresh))
         return jwt.scalar_one_or_none()
 
-    async def delete_by_user_id(self, db: AsyncSession , user_id: UUID):
+    async def delete_by_user_id(self, db: AsyncSession, user_id: UUID):
         jwt = await db.execute(select(self.model).where(self.model.user_id == user_id))
         await self.delete(db, jwt.scalar_one_or_none())
+
 
 # How to use
 user_manager = UserManager(User)
