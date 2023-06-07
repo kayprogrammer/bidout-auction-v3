@@ -7,7 +7,6 @@ from starlite import (
     OpenAPIController,
     HTTPException,
     ValidationException,
-    AsyncTestClient,
 )
 
 from starlite.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
@@ -45,10 +44,11 @@ def create_app() -> Starlite:
     )
 
     app = Starlite(
+        dependencies={"db": Provide(get_db)},
         route_handlers=all_routers,
         openapi_config=openapi_config,
         template_config=template_config,
-        dependencies={"db": Provide(get_db)},
+       
         exception_handlers={
             ValidationException: validation_exception_handler,
             HTTPException: http_exception_handler,
@@ -59,8 +59,6 @@ def create_app() -> Starlite:
 
 
 app = create_app()
-client = AsyncTestClient(app=app)
-
 
 @get(
     "/ping",

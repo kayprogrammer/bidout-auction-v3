@@ -34,7 +34,7 @@ initial_data:
 	python initials/initial_data.py
 
 tests:
-	pytest --verbose --disable-warnings -vv -x
+	pytest --verbose --disable-warnings -vv -x --timeout=10
 
 requirements:
 	pip install -r requirements.txt

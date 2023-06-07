@@ -2,10 +2,8 @@ from starlite import Controller, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.schemas.general import (
     SubscriberSchema,
-    SiteDetailDataSchema,
     SiteDetailResponseSchema,
     SubscriberResponseSchema,
-    ReviewsDataSchema,
     ReviewsResponseSchema,
 )
 

@@ -1,11 +1,8 @@
 from app.db.managers.general import review_manager
-import pytest
 import mock
 
 BASE_URL_PATH = "/api/v3/general"
 
-
-@pytest.mark.asyncio
 async def test_retrieve_sitedetail(client):
     # Check response validity
     response = await client.get(f"{BASE_URL_PATH}/site-detail")
@@ -17,7 +14,6 @@ async def test_retrieve_sitedetail(client):
     assert all(item in json_resp["data"] for item in keys)
 
 
-@pytest.mark.asyncio
 async def test_subscribe(client):
     # Check response validity
     response = await client.post(
@@ -31,7 +27,6 @@ async def test_subscribe(client):
     }
 
 
-@pytest.mark.asyncio
 async def test_retrieve_reviews(client, verified_user, database):
     # Create test reviews
     review_dict = {
@@ -42,9 +37,10 @@ async def test_retrieve_reviews(client, verified_user, database):
     review_manager.create(database, review_dict)
 
     # Check response validity
-    _, response = await client.get(f"{BASE_URL_PATH}/reviews")
+    response = await client.get(f"{BASE_URL_PATH}/reviews")
     assert response.status_code == 200
-    assert response.json == {
+    print(response.json())
+    assert response.json() == {
         "status": "success",
         "message": "Reviews fetched",
         "data": [{"reviewer": mock.ANY, "text": "This is a nice platform"}],
