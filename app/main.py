@@ -28,37 +28,32 @@ class MyOpenAPIController(OpenAPIController):
     path = "/"
 
 
-def create_app() -> Starlite:
-    openapi_config = OpenAPIConfig(
-        title=settings.PROJECT_NAME,
-        version="3.0.0",
-        description="A simple bidding API built with Litestar",
-        security=[{"BearerToken": []}],
-        openapi_controller=MyOpenAPIController,
-        root_schema_site="swagger",
-    )
+openapi_config = OpenAPIConfig(
+    title=settings.PROJECT_NAME,
+    version="3.0.0",
+    description="A simple bidding API built with Litestar",
+    security=[{"BearerToken": []}],
+    openapi_controller=MyOpenAPIController,
+    root_schema_site="swagger",
+)
 
-    template_config = TemplateConfig(
-        directory=Path("app/templates"),
-        engine=JinjaTemplateEngine,
-    )
+template_config = TemplateConfig(
+    directory=Path("app/templates"),
+    engine=JinjaTemplateEngine,
+)
 
-    app = Starlite(
-        dependencies={"db": Provide(get_db)},
-        route_handlers=all_routers,
-        openapi_config=openapi_config,
-        template_config=template_config,
-       
-        exception_handlers={
-            ValidationException: validation_exception_handler,
-            HTTPException: http_exception_handler,
-            HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
-        },
-    )
-    return app
+app = Starlite(
+    dependencies={"db": Provide(get_db)},
+    route_handlers=all_routers,
+    openapi_config=openapi_config,
+    template_config=template_config,
+    exception_handlers={
+        ValidationException: validation_exception_handler,
+        HTTPException: http_exception_handler,
+        HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
+    },
+)
 
-
-app = create_app()
 
 @get(
     "/ping",

@@ -1,5 +1,5 @@
 from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -15,9 +15,8 @@ sqlalchemy_plugin = SQLAlchemyPlugin(config=sqlalchemy_config)
 
 Base = declarative_base()
 
-AsyncSessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=sqlalchemy_config.engine,
-    class_=AsyncSession,
     autocommit=False,
     autoflush=False,
 )
@@ -28,4 +27,4 @@ async def get_db():
     try:
         yield db
     finally:
-        await db.close()
+        db.close()

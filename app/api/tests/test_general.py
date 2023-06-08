@@ -3,6 +3,7 @@ import mock
 
 BASE_URL_PATH = "/api/v3/general"
 
+
 async def test_retrieve_sitedetail(client):
     # Check response validity
     response = await client.get(f"{BASE_URL_PATH}/site-detail")
@@ -34,12 +35,10 @@ async def test_retrieve_reviews(client, verified_user, database):
         "show": True,
         "text": "This is a nice platform",
     }
-    review_manager.create(database, review_dict)
-
+    await review_manager.create(database, review_dict)
     # Check response validity
     response = await client.get(f"{BASE_URL_PATH}/reviews")
     assert response.status_code == 200
-    print(response.json())
     assert response.json() == {
         "status": "success",
         "message": "Reviews fetched",

@@ -1,61 +1,62 @@
-from starlite import Starlite, AsyncTestClient, Provide
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from starlite import AsyncTestClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.core.database import Base
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db.managers.accounts import user_manager
-from app.api.routers import all_routers
-from app.main import app
-
-import pytest_asyncio
-import asyncio
+import pytest, asyncio
 
 TEST_DATABASE = f"{settings.SQLALCHEMY_DATABASE_URL}_test"
 
-engine = create_async_engine(TEST_DATABASE, future=True)
+engine = create_async_engine(TEST_DATABASE, pool_size=10, echo=True, max_overflow=10)
 
-TestAsyncSessionLocal = sessionmaker(
+TestAsyncSessionLocal = async_sessionmaker(
     bind=engine,
-    class_=AsyncSession,
+    expire_on_commit=False,
     autocommit=False,
     autoflush=False,
 )
 
 
-@pytest_asyncio.fixture(scope='session')
+@pytest.fixture(scope="session")
 def event_loop():
     """Overrides pytest default function scoped event loop"""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
-@pytest_asyncio.fixture
-async def database():
-    db = TestAsyncSessionLocal()
+
+@pytest.fixture
+def app(session_mocker):
+    session_mocker.patch(
+        "app.core.database.AsyncSessionLocal", new=TestAsyncSessionLocal
+    )
+    from app.main import app
+
+    return app
+
+
+@pytest.fixture(scope="session")
+async def setup_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-    yield db
-    db.close()
+    await engine.dispose()
 
-# @pytest_asyncio.fixture
-# def app(database):
-#     def test_get_db():
-#         try:
-#             yield database
-#         finally:
-#             database.close()
 
-#     app = Starlite(route_handlers=all_routers, dependencies={"db": Provide(test_get_db)})
-#     return app
-
-@pytest_asyncio.fixture(scope='session')
-async def client():
+@pytest.fixture
+async def client(app, setup_db):
     async with AsyncTestClient(app) as client:
         yield client
 
-@pytest_asyncio.fixture
+
+@pytest.fixture
+async def database():
+    async with TestAsyncSessionLocal() as db:
+        yield db
+
+
+@pytest.fixture
 async def test_user(database):
     user_dict = {
         "first_name": "Test",
@@ -67,12 +68,12 @@ async def test_user(database):
     return user
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def verified_user(database):
     user_dict = {
         "first_name": "Test",
-        "last_name": "Name",
-        "email": "test@example.com",
+        "last_name": "Verified",
+        "email": "testverifieduser@example.com",
         "password": get_password_hash("testpassword"),
         "is_email_verified": True,
     }

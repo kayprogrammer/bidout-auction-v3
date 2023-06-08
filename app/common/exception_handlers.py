@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Optional
 from starlite import HTTPException, ValidationException, Response, Request, status_codes
 
 
@@ -10,7 +9,7 @@ class Error(Exception):
 
 
 class RequestError(Error):
-    def __init__(self, status_code: int, error_msg: Optional[str] = None):
+    def __init__(self, error_msg: str, status_code: int = 400):
         self.status_code = HTTPStatus(status_code)
         self.error_msg = error_msg
 
