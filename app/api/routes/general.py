@@ -20,7 +20,6 @@ class SiteDetailView(Controller):
     @get(
         summary="Retrieve site details",
         description="This endpoint retrieves few details of the site/application",
-        response={"application/json": SiteDetailResponseSchema},
     )
     async def retrieve_site_details(self, db: AsyncSession) -> SiteDetailResponseSchema:
         sitedetail = await sitedetail_manager.get(db)
@@ -33,7 +32,6 @@ class SubscriberCreateView(Controller):
     @post(
         summary="Add a subscriber",
         description="This endpoint creates a newsletter subscriber in our application",
-        response={"application/json": SubscriberResponseSchema},
     )
     async def subscribe(
         self, data: SubscriberSchema, db: AsyncSession
@@ -54,7 +52,6 @@ class ReviewsView(Controller):
     @get(
         summary="Retrieve site reviews",
         description="This endpoint retrieves a few reviews of the application",
-        response={"application/json": ReviewsResponseSchema},
     )
     async def get(self, db: AsyncSession) -> ReviewsResponseSchema:
         reviews = await review_manager.get_active(db)

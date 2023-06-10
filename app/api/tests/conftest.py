@@ -1,21 +1,13 @@
 from starlite import AsyncTestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.core.database import Base
-from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db.managers.accounts import user_manager
 import pytest, asyncio
+from pytest_postgresql import factories
+from pytest_postgresql.janitor import DatabaseJanitor
 
-TEST_DATABASE = f"{settings.SQLALCHEMY_DATABASE_URL}_test"
-
-engine = create_async_engine(TEST_DATABASE, pool_size=10, echo=True, max_overflow=10)
-
-TestAsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+test_db = factories.postgresql_proc(port=None, dbname="test_db")
 
 
 @pytest.fixture(scope="session")
@@ -26,34 +18,53 @@ def event_loop():
     loop.close()
 
 
+@pytest.fixture(scope="session")
+async def engine(test_db):
+    pg_host = test_db.host
+    pg_port = test_db.port
+    pg_user = test_db.user
+    pg_db = test_db.dbname
+    pg_password = test_db.password
+
+    with DatabaseJanitor(
+        pg_user, pg_host, pg_port, pg_db, test_db.version, pg_password
+    ):
+        connection_str = f"postgresql+psycopg://{pg_user}:@{pg_host}:{pg_port}/{pg_db}"
+        engine = create_async_engine(connection_str, future=True)
+        yield engine
+        await engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+async def setup_db(engine):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+
 @pytest.fixture
-def app(session_mocker):
-    session_mocker.patch(
-        "app.core.database.AsyncSessionLocal", new=TestAsyncSessionLocal
+async def database(mocker, engine):
+    TestAsyncSessionLocal = async_sessionmaker(
+        bind=engine,
+        autocommit=False,
+        autoflush=False,
     )
+    mocker.patch("app.core.database.AsyncSessionLocal", new=TestAsyncSessionLocal)
+    async with TestAsyncSessionLocal() as db:
+        yield db
+
+
+@pytest.fixture
+def app():
     from app.main import app
 
     return app
 
 
-@pytest.fixture(scope="session")
-async def setup_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    await engine.dispose()
-
-
 @pytest.fixture
-async def client(app, setup_db):
+async def client(app):
     async with AsyncTestClient(app) as client:
         yield client
-
-
-@pytest.fixture
-async def database():
-    async with TestAsyncSessionLocal() as db:
-        yield db
 
 
 @pytest.fixture

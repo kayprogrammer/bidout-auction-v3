@@ -43,6 +43,7 @@ template_config = TemplateConfig(
 )
 
 app = Starlite(
+    # on_startup=sessionmanager.init(settings.SQLALCHEMY_DATABASE_URL),
     dependencies={"db": Provide(get_db)},
     route_handlers=all_routers,
     openapi_config=openapi_config,
@@ -53,16 +54,3 @@ app = Starlite(
         HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
     },
 )
-
-
-@get(
-    "/ping",
-    tags=["HealthCheck"],
-    summary="API Health Check",
-    description="This endpoint checks the health of the API",
-)
-async def healthcheck() -> dict[str, str]:
-    return {"success": "pong!"}
-
-
-app.register(healthcheck, add_to_openapi_schema=True)

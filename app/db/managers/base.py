@@ -23,17 +23,19 @@ class BaseManager(Generic[ModelType]):
         self.model = model
 
     async def get_all(self, db: AsyncSession) -> Optional[List[ModelType]]:
-        result = await db.execute(select(self.model))
-        return result.scalars().all()
+        result = (await db.execute(select(self.model))).scalars().all()
+        return result
 
     async def get_all_ids(self, db: AsyncSession) -> Optional[List[ModelType]]:
-        result = await db.execute(select(self.model.id))
+        result = (await db.execute(select(self.model.id))).scalars().all()
         # ids = [item[0] for item in items]
-        return result.scalars().all()
+        return result
 
     async def get_by_id(self, db: AsyncSession, id: UUID) -> Optional[ModelType]:
-        item = await db.execute(select(self.model).where(self.model.id == id))
-        return item.scalar_one_or_none()
+        item = (
+            await db.execute(select(self.model).where(self.model.id == id))
+        ).scalar_one_or_none()
+        return item
 
     async def create(
         self, db: AsyncSession, obj_in: Optional[ModelType] = {}
@@ -77,8 +79,10 @@ class BaseManager(Generic[ModelType]):
             await db.commit()
 
     async def delete_by_id(self, db: AsyncSession, id: UUID):
-        to_delete = await db.execute(select(self.model).where(self.model.id == id))
-        db.delete(to_delete.scalar_one_or_none())
+        to_delete = (
+            await db.execute(select(self.model).where(self.model.id == id))
+        ).scalar_one_or_none()
+        db.delete(to_delete)
         await db.commit()
 
     async def delete_all(self, db: AsyncSession):

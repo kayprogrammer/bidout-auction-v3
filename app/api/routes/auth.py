@@ -102,60 +102,51 @@ class ResendVerificationEmailView(Controller):
         return ResponseSchema(message="Verification email sent")
 
 
-class SendPasswordResetOtpView(HTTPMethodView):
-    decorators = [validate_request(RequestOtpSchema)]
-
-    @openapi.definition(
-        body=RequestBody({"application/json": RequestOtpSchema}, required=True),
+class SendPasswordResetOtpView(Controller):
+    @post(
         summary="Send Password Reset Otp",
         description="This endpoint sends new password reset otp to the user's email",
         response={"application/json": ResponseSchema},
     )
-    async def post(self, request, **kwargs):
-        db = request.ctx.db
-        data = kwargs.get("data")
-        user_by_email = user_manager.get_by_email(db, data["email"])
+    async def post(self, data: RequestOtpSchema, db: AsyncSession):
+        user_by_email = user_manager.get_by_email(db, data.email)
         if not user_by_email:
-            return CustomResponse.error("Incorrect Email", status_code=404)
+            raise RequestError(error_msg="Incorrect Email", status_code=404)
 
         # Send password reset email
         send_email(request, db, user_by_email, "reset")
 
-        return CustomResponse.success(message="Password otp sent")
+        return ResponseSchema(message="Password otp sent")
 
 
-class SetNewPasswordView(HTTPMethodView):
-    decorators = [validate_request(SetNewPasswordSchema)]
-
-    @openapi.definition(
-        body=RequestBody({"application/json": SetNewPasswordSchema}, required=True),
+class SetNewPasswordView(Controller):
+    @post(
         summary="Set New Password",
         description="This endpoint verifies the password reset otp",
         response={"application/json": ResponseSchema},
     )
-    async def post(self, request, **kwargs):
-        db = request.ctx.db
-        data = kwargs.get("data")
-        email = data["email"]
-        otp_code = data["otp"]
-        password = data["password"]
+    async def post(self, data: SetNewPasswordSchema, db: AsyncSession):
+        email = data.email
+        otp_code = data.otp
+        password = data.password
 
         user_by_email = user_manager.get_by_email(db, email)
         if not user_by_email:
-            return CustomResponse.error("Incorrect Email", status_code=404)
+            raise RequestError(error_msg="Incorrect Email", status_code=404)
 
         otp = otp_manager.get_by_user_id(db, user_by_email.id)
         if not otp or otp.code != otp_code:
-            return CustomResponse.error("Incorrect Otp")
+            raise RequestError(error_msg="Incorrect Otp", status_code=404)
+
         if otp.check_expiration():
-            return CustomResponse.error("Expired Otp")
+            raise RequestError(error_msg="Expired Otp")
 
         user_manager.update(db, user_by_email, {"password": password})
 
         # Send password reset success email
         send_email(request, db, user_by_email, "reset-success")
 
-        return CustomResponse.success(message="Password reset successful")
+        return ResponseSchema(message="Password reset successful")
 
 
 class LoginView(HTTPMethodView):

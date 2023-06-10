@@ -33,7 +33,7 @@ async def test_retrieve_reviews(client, verified_user, database):
     review_dict = {
         "reviewer_id": verified_user.id,
         "show": True,
-        "text": "This is a nice platform",
+        "text": "This is a nice new platform",
     }
     await review_manager.create(database, review_dict)
     # Check response validity
@@ -42,5 +42,5 @@ async def test_retrieve_reviews(client, verified_user, database):
     assert response.json() == {
         "status": "success",
         "message": "Reviews fetched",
-        "data": [{"reviewer": mock.ANY, "text": "This is a nice platform"}],
+        "data": [{"reviewer": mock.ANY, "text": "This is a nice new platform"}],
     }
