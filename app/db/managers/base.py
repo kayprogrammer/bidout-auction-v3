@@ -50,7 +50,7 @@ class BaseManager(Generic[ModelType]):
         return obj
 
     async def bulk_create(self, db: AsyncSession, obj_in: list) -> Optional[bool]:
-        items = db.execute(
+        items = await db.execute(
             insert(self.model)
             .values(obj_in)
             .on_conflict_do_nothing()
@@ -75,18 +75,18 @@ class BaseManager(Generic[ModelType]):
 
     async def delete(self, db: AsyncSession, db_obj: Optional[ModelType]):
         if db_obj:
-            db.delete(db_obj)
+            await db.delete(db_obj)
             await db.commit()
 
     async def delete_by_id(self, db: AsyncSession, id: UUID):
         to_delete = (
             await db.execute(select(self.model).where(self.model.id == id))
         ).scalar_one_or_none()
-        db.delete(to_delete)
+        await db.delete(to_delete)
         await db.commit()
 
     async def delete_all(self, db: AsyncSession):
-        to_delete = db.delete(self.model)
+        to_delete = await db.delete(self.model)
         await db.execute(to_delete)
         await db.commit()
 

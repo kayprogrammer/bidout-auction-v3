@@ -53,7 +53,7 @@ class ReviewsView(Controller):
         summary="Retrieve site reviews",
         description="This endpoint retrieves a few reviews of the application",
     )
-    async def get(self, db: AsyncSession) -> ReviewsResponseSchema:
+    async def reviews(self, db: AsyncSession) -> ReviewsResponseSchema:
         reviews = await review_manager.get_active(db)
         data = [review for review in reviews]
         return ReviewsResponseSchema(message="Reviews fetched", data=data)

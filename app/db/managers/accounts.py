@@ -24,7 +24,8 @@ class UserManager(BaseManager[User]):
         password = obj_in.get("password")
         if password:
             obj_in["password"] = get_password_hash(password)
-        return await super().update(db, db_obj, obj_in)
+        user = await super().update(db, db_obj, obj_in)
+        return user
 
 
 class OtpManager(BaseManager[Otp]):

@@ -62,3 +62,18 @@ class RefreshTokensSchema(BaseModel):
 
 class RegisterResponseSchema(ResponseSchema):
     data: RequestOtpSchema
+
+
+class TokensResponseDataSchema(BaseModel):
+    access: str = Field(
+        ...,
+        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+    )
+    refresh: str = Field(
+        ...,
+        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+    )
+
+
+class TokensResponseSchema(ResponseSchema):
+    data: TokensResponseDataSchema

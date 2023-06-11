@@ -1,5 +1,4 @@
 from app.db.managers.general import review_manager
-import mock
 
 BASE_URL_PATH = "/api/v3/general"
 
@@ -28,7 +27,7 @@ async def test_subscribe(client):
     }
 
 
-async def test_retrieve_reviews(client, verified_user, database):
+async def test_retrieve_reviews(client, verified_user, database, mocker):
     # Create test reviews
     review_dict = {
         "reviewer_id": verified_user.id,
@@ -42,5 +41,5 @@ async def test_retrieve_reviews(client, verified_user, database):
     assert response.json() == {
         "status": "success",
         "message": "Reviews fetched",
-        "data": [{"reviewer": mock.ANY, "text": "This is a nice new platform"}],
+        "data": [{"reviewer": mocker.ANY, "text": "This is a nice new platform"}],
     }

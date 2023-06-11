@@ -1,5 +1,12 @@
 from http import HTTPStatus
-from starlite import HTTPException, ValidationException, Response, Request, status_codes
+from starlite import (
+    HTTPException,
+    ValidationException,
+    Response,
+    Request,
+    status_codes,
+    StarLiteException,
+)
 
 
 class Error(Exception):
@@ -9,24 +16,24 @@ class Error(Exception):
 
 
 class RequestError(Error):
-    def __init__(self, error_msg: str, status_code: int = 400):
+    def __init__(
+        self, err_msg: str, status_code: int = 400, data: dict = None, *args: object
+    ) -> None:
         self.status_code = HTTPStatus(status_code)
-        self.error_msg = error_msg
+        self.err_msg = err_msg
+        self.data = data
+
+        super().__init__(*args)
 
 
-class RequestErrorHandler:
-    def __init__(self, exc: RequestError):
-        self.status_code = exc.status_code
-        self.error_msg = exc.error_msg
-
-    def process_message(self):
-        return Response(
-            status_code=self.status_code,
-            content={
-                "status": "failure",
-                "message": self.error_msg,
-            },
-        )
+def request_error_handler(request: Request, exc: RequestError):
+    err_dict = {
+        "status": "failure",
+        "message": exc.err_msg,
+    }
+    if exc.data:
+        err_dict["data"] = exc.data
+    return Response(status_code=exc.status_code, content=err_dict)
 
 
 def http_exception_handler(request: Request, exc: HTTPException) -> Response:

@@ -3,9 +3,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.core.database import Base
 from app.core.security import get_password_hash
 from app.db.managers.accounts import user_manager
-import pytest, asyncio
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
+import pytest, asyncio
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
 

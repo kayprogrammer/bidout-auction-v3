@@ -1,7 +1,6 @@
 from starlite import (
     Starlite,
     TemplateConfig,
-    get,
     Provide,
     OpenAPIConfig,
     OpenAPIController,
@@ -18,6 +17,8 @@ from app.common.exception_handlers import (
     validation_exception_handler,
     http_exception_handler,
     internal_server_error_handler,
+    request_error_handler,
+    RequestError,
 )
 from app.api.routers import all_routers
 
@@ -43,7 +44,6 @@ template_config = TemplateConfig(
 )
 
 app = Starlite(
-    # on_startup=sessionmanager.init(settings.SQLALCHEMY_DATABASE_URL),
     dependencies={"db": Provide(get_db)},
     route_handlers=all_routers,
     openapi_config=openapi_config,
@@ -52,5 +52,6 @@ app = Starlite(
         ValidationException: validation_exception_handler,
         HTTPException: http_exception_handler,
         HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
+        RequestError: request_error_handler,
     },
 )
