@@ -73,7 +73,7 @@ async def test_user(database):
         "first_name": "Test",
         "last_name": "Name",
         "email": "test@example.com",
-        "password": get_password_hash("testpassword"),
+        "password": "testpassword",
     }
     user = await user_manager.create(database, user_dict)
     return user
@@ -85,7 +85,7 @@ async def verified_user(database):
         "first_name": "Test",
         "last_name": "Verified",
         "email": "testverifieduser@example.com",
-        "password": get_password_hash("testpassword"),
+        "password": "testpassword",
         "is_email_verified": True,
     }
     user = await user_manager.create(database, user_dict)

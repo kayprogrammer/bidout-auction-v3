@@ -106,87 +106,87 @@ async def test_resend_verification_email(mocker, client, test_user, database):
     }
 
 
-# async def test_login(mocker, client, test_user, database):
+async def test_login(mocker, client, test_user, database):
+    # Test for invalid credentials
+    response = await client.post(
+        f"{BASE_URL_PATH}/login",
+        json={"email": "invalid@email.com", "password": "invalidpassword"},
+    )
+    assert response.status_code == 401
+    assert response.json() == {
+        "status": "failure",
+        "message": "Invalid credentials",
+    }
 
-#     # Test for invalid credentials
-#     response = await client.post(
-#         f"{BASE_URL_PATH}/login",
-#         json={"email": "not_registered@email.com", "password": "not_registered"},
-#     )
-#     assert response.status_code == 401
-#     assert response.json() == {
-#         "status": "failure",
-#         "message": "Invalid credentials",
-#     }
+    # Test for unverified credentials (email)
+    response = await client.post(
+        f"{BASE_URL_PATH}/login",
+        json={"email": test_user.email, "password": "testpassword"},
+    )
+    assert response.status_code == 401
+    assert response.json() == {
+        "status": "failure",
+        "message": "Verify your email first",
+    }
 
-#     # Test for unverified credentials (email)
-#     response = await client.post(
-#         f"{BASE_URL_PATH}/login",
-#         json={"email": test_user.email, "password": "testuser123"},
-#     )
-#     print(test_user)
-#     assert response.status_code == 401
-#     assert response.json() == {
-#         "status": "failure",
-#         "message": "Verify your email first",
-#     }
-
-#     # Test for valid credentials and verified email address
-#     test_user = await user_manager.update(
-#         database, test_user, {"is_email_verified": True}
-#     )
-#     response = await client.post(
-#         f"{BASE_URL_PATH}/login",
-#         json={"email": test_user.email, "password": "testuser123"},
-#     )
-#     assert response.status_code == 201
-#     assert response.json() == {
-#         "status": "success",
-#         "message": "Login successful",
-#         "data": {"access": mocker.ANY, "refresh": mocker.ANY},
-#     }
+    # Test for valid credentials and verified email address
+    test_user = await user_manager.update(
+        database, test_user, {"is_email_verified": True}
+    )
+    response = await client.post(
+        f"{BASE_URL_PATH}/login",
+        json={"email": test_user.email, "password": "testpassword"},
+    )
+    assert response.status_code == 201
+    assert response.json() == {
+        "status": "success",
+        "message": "Login successful",
+        "data": {"access": mocker.ANY, "refresh": mocker.ANY},
+    }
 
 
-# async def test_refresh_token(mocker, client, database, verified_user):
+async def test_refresh_token(mocker, client, database, verified_user):
 
-#     jwt_obj = await jwt_manager.create(
-#         database,
-#         {"user_id": str(verified_user.id), "access": "access", "refresh": "refresh"},
-#     )
+    jwt_obj = await jwt_manager.create(
+        database,
+        {"user_id": str(verified_user.id), "access": "access", "refresh": "refresh"},
+    )
 
-#     # Test for invalid refresh token (not found)
-#     response = await client.post(
-#         f"{BASE_URL_PATH}/refresh", json={"refresh": "invalid_refresh_token"}
-#     )
-#     assert response.status_code == 404
-#     assert response.json() == {
-#         "status": "failure",
-#         "message": "Refresh token does not exist",
-#     }
+    # Test for invalid refresh token (not found)
+    response = await client.post(
+        f"{BASE_URL_PATH}/refresh", json={"refresh": "invalid_refresh_token"}
+    )
+    assert response.status_code == 404
+    assert response.json() == {
+        "status": "failure",
+        "message": "Refresh token does not exist",
+    }
 
-#     # Test for invalid refresh token (invalid or expired)
-#     response = await client.post(
-#         f"{BASE_URL_PATH}/refresh", json={"refresh": jwt_obj.refresh}
-#     )
-#     assert response.status_code == 401
-#     assert response.json() == {
-#         "status": "failure",
-#         "message": "Refresh token is invalid or expired",
-#     }
+    # Test for invalid refresh token (invalid or expired)
+    response = await client.post(
+        f"{BASE_URL_PATH}/refresh", json={"refresh": jwt_obj.refresh}
+    )
+    assert response.status_code == 401
+    assert response.json() == {
+        "status": "failure",
+        "message": "Refresh token is invalid or expired",
+    }
 
-#     # Test for valid refresh token
-#     refresh = await Authentication.create_refresh_token()
-#     jwt_obj = await jwt_manager.update(database, jwt_obj, {"refresh": refresh})
-#     mocker.patch("app.api.utils.tokens.verify_refresh_token", return_value=True)
-#     response = await client.post(
-#         f"{BASE_URL_PATH}/refresh", json={"refresh": jwt_obj.refresh}
-#     )
-#     assert response.status_code == 201
-#     assert response.json() == {
-#         "status": "success",
-#         "message": "Tokens refresh successful",
-#         "data": {"access": mocker.ANY, "refresh": mocker.ANY},
-#     }
+    # Test for valid refresh token
+    refresh = await Authentication.create_refresh_token()
+    jwt_obj = await jwt_manager.update(database, jwt_obj, {"refresh": refresh})
+    mocker.patch(
+        "app.api.utils.auth.Authentication.verify_refresh_token", return_value=True
+    )
+    response = await client.post(
+        f"{BASE_URL_PATH}/refresh", json={"refresh": jwt_obj.refresh}
+    )
+    assert response.status_code == 201
+    assert response.json() == {
+        "status": "success",
+        "message": "Tokens refresh successful",
+        "data": {"access": mocker.ANY, "refresh": mocker.ANY},
+    }
 
 
 async def test_get_password_otp(mocker, client, verified_user):

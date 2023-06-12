@@ -221,7 +221,7 @@ class RefreshTokensView(Controller):
         jwt = await jwt_manager.get_by_refresh(db, token)
         if not jwt:
             raise RequestError(err_msg="Refresh token does not exist", status_code=404)
-        if not Authentication.verify_refresh_token(token):
+        if not await Authentication.verify_refresh_token(token):
             raise RequestError(
                 err_msg="Refresh token is invalid or expired", status_code=401
             )

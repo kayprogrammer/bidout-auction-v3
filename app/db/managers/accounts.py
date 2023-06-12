@@ -11,8 +11,10 @@ import random
 
 class UserManager(BaseManager[User]):
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
-        user = await db.execute(select(self.model).where(self.model.email == email))
-        return user.scalar_one_or_none()
+        user = (
+            await db.execute(select(self.model).where(self.model.email == email))
+        ).scalar_one_or_none()
+        return user
 
     async def create(self, db: AsyncSession, obj_in) -> User:
         # hash the password
@@ -30,8 +32,10 @@ class UserManager(BaseManager[User]):
 
 class OtpManager(BaseManager[Otp]):
     async def get_by_user_id(self, db: AsyncSession, user_id: UUID) -> Optional[Otp]:
-        otp = await db.execute(select(self.model).where(self.model.user_id == user_id))
-        return otp.scalar_one_or_none()
+        otp = (
+            await db.execute(select(self.model).where(self.model.user_id == user_id))
+        ).scalar_one_or_none()
+        return otp
 
     async def create(self, db: AsyncSession, obj_in) -> Optional[Otp]:
         code = random.randint(100000, 999999)
@@ -44,16 +48,22 @@ class OtpManager(BaseManager[Otp]):
 
 class JwtManager(BaseManager[Jwt]):
     async def get_by_user_id(self, db: AsyncSession, user_id: str) -> Optional[Jwt]:
-        jwt = await db.execute(select(self.model).where(self.model.user_id == user_id))
-        return jwt.scalar_one_or_none()
+        jwt = (
+            await db.execute(select(self.model).where(self.model.user_id == user_id))
+        ).scalar_one_or_none()
+        return jwt
 
     async def get_by_refresh(self, db: AsyncSession, refresh: str) -> Optional[Jwt]:
-        jwt = await db.execute(select(self.model).where(self.model.refresh == refresh))
-        return jwt.scalar_one_or_none()
+        jwt = (
+            await db.execute(select(self.model).where(self.model.refresh == refresh))
+        ).scalar_one_or_none()
+        return jwt
 
     async def delete_by_user_id(self, db: AsyncSession, user_id: UUID):
-        jwt = await db.execute(select(self.model).where(self.model.user_id == user_id))
-        await self.delete(db, jwt.scalar_one_or_none())
+        jwt = (
+            await db.execute(select(self.model).where(self.model.user_id == user_id))
+        ).scalar_one_or_none()
+        await self.delete(db, jwt)
 
 
 # How to use
