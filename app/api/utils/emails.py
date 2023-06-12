@@ -11,7 +11,6 @@ env = Environment(loader=PackageLoader("app", "templates"))
 async def sort_email(db, user, type):
     template_file = "welcome.html"
     subject = "Account verified"
-
     data = {"template_file": template_file, "subject": subject}
 
     # Sort different templates and subject for respective email types

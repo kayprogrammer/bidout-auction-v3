@@ -56,7 +56,7 @@ class User(BaseModel):
         return f"{self.first_name} {self.last_name}"
 
     def __repr__(self):
-        return self.full_name()
+        return self.full_name
 
 
 class Jwt(BaseModel):

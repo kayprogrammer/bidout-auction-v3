@@ -17,6 +17,7 @@ AsyncSessionLocal = async_sessionmaker(
     bind=sqlalchemy_config.engine,
     autocommit=False,
     autoflush=False,
+    expire_on_commit=False,
 )
 
 

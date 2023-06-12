@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 import random
 import string
 from datetime import datetime, timedelta
@@ -7,54 +8,50 @@ from jose import jwt
 from app.core.config import settings
 from app.db.managers.accounts import user_manager, jwt_manager
 
+ALGORITHM = "HS256"
 
-class Authentication(object):
-    def __init__(self, algorithm="HS256") -> None:
-        self.algorithm = algorithm
 
+class Authentication:
     # generate random string
-    def get_random(self, length):
+    def get_random(length: int):
         return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
     # generate access token based and encode user's id
-    async def create_access_token(self, payload: dict):
+    async def create_access_token(payload: dict):
         expire = datetime.utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
         to_encode = {"exp": expire, **payload}
-        encoded_jwt = await jwt.encode(
-            to_encode, settings.SECRET_KEY, algorithm=self.algorithm
-        )
+        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
     # generate random refresh token
     async def create_refresh_token(
-        self,
         expire=datetime.utcnow()
         + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
     ):
-        return await jwt.encode(
-            {"exp": expire, "data": self.get_random(10)},
+        return jwt.encode(
+            {"exp": expire, "data": Authentication.get_random(10)},
             settings.SECRET_KEY,
-            algorithm=self.algorithm,
+            algorithm=ALGORITHM,
         )
 
     # verify refresh token
-    async def verify_refresh_token(self, token):
+    async def verify_refresh_token(token: str):
         try:
-            await jwt.decode(token, settings.SECRET_KEY, algorithms=[self.algorithm])
+            await jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
             return True
         except:
             return False
 
     # deocde access token from header
-    async def decodeJWT(self, db, token):
+    async def decodeJWT(db: AsyncSession, token: str = None):
         if not token:
             return None
 
         try:
             decoded = await jwt.decode(
-                token[7:], settings.SECRET_KEY, algorithms=[self.algorithm]
+                token[7:], settings.SECRET_KEY, algorithms=[ALGORITHM]
             )
         except:
             return None
