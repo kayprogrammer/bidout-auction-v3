@@ -89,7 +89,7 @@ class Otp(BaseModel):
     code: Mapped[int] = Column(Integer())
 
     def __repr__(self):
-        return f"User - {self.user.get_full_name} | Code - {self.code}"
+        return f"User - {self.user.full_name} | Code - {self.code}"
 
     def check_expiration(self):
         now = datetime.utcnow()

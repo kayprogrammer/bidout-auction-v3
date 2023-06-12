@@ -168,7 +168,6 @@ class LoginView(Controller):
     @post(
         summary="Login a user",
         description="This endpoint generates new access and refresh tokens for authentication",
-        status_code=201,
     )
     async def login(
         self, data: LoginUserSchema, db: AsyncSession
@@ -214,7 +213,6 @@ class RefreshTokensView(Controller):
     @post(
         summary="Refresh tokens",
         description="This endpoint refresh tokens by generating new access and refresh tokens for a user",
-        status_code=200,
     )
     async def refresh(
         self, data: RefreshTokensSchema, db: AsyncSession

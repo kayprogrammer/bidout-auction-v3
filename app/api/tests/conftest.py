@@ -1,8 +1,9 @@
 from starlite import AsyncTestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from app.api.utils.auth import Authentication
 from app.core.database import Base
 from app.core.security import get_password_hash
-from app.db.managers.accounts import user_manager
+from app.db.managers.accounts import jwt_manager, user_manager
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 import pytest, asyncio
@@ -43,27 +44,26 @@ async def setup_db(engine):
 
 
 @pytest.fixture
-async def database(mocker, engine):
+def app(mocker, engine):
     TestAsyncSessionLocal = async_sessionmaker(
-        bind=engine,
-        autocommit=False,
-        autoflush=False,
+        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
     )
     mocker.patch("app.core.database.AsyncSessionLocal", new=TestAsyncSessionLocal)
-    async with TestAsyncSessionLocal() as db:
+    from app.main import app
+
+    return {"app": app, "db_session": TestAsyncSessionLocal}
+
+
+@pytest.fixture
+async def database(app):
+    session = app["db_session"]
+    async with session() as db:
         yield db
 
 
 @pytest.fixture
-def app():
-    from app.main import app
-
-    return app
-
-
-@pytest.fixture
 async def client(app):
-    async with AsyncTestClient(app) as client:
+    async with AsyncTestClient(app["app"]) as client:
         yield client
 
 
@@ -90,3 +90,31 @@ async def verified_user(database):
     }
     user = await user_manager.create(database, user_dict)
     return user
+
+
+@pytest.fixture
+async def another_verified_user(database):
+    create_user_dict = {
+        "first_name": "AnotherTest",
+        "last_name": "UserVerified",
+        "email": "anothertestverifieduser@example.com",
+        "password": "anothertestverifieduser123",
+        "is_email_verified": True,
+    }
+
+    user = await user_manager.create(database, create_user_dict)
+    return user
+
+
+@pytest.fixture
+async def authorized_client(verified_user, client, database):
+    access = await Authentication.create_access_token(
+        {"user_id": str(verified_user.id)}
+    )
+    refresh = await Authentication.create_refresh_token()
+    await jwt_manager.create(
+        database,
+        {"user_id": verified_user.id, "access": access, "refresh": refresh},
+    )
+    client.headers = {**client.headers, "Authorization": f"Bearer {access}"}
+    return client
