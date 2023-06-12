@@ -3,16 +3,18 @@ from .base import ResponseSchema
 
 
 class RegisterUserSchema(BaseModel):
-    first_name: str = Field(..., example="John", max_length=50)
-    last_name: str = Field(..., example="Doe", max_length=50)
+    first_name: str = Field(..., example="John")
+    last_name: str = Field(..., example="Doe")
     email: EmailStr = Field(..., example="johndoe@example.com")
-    password: str = Field(..., example="strongpassword", min_length=8)
+    password: str = Field(..., example="strongpassword")
     terms_agreement: bool
 
     @validator("first_name", "last_name")
     def validate_name(cls, v):
         if len(v.split(" ")) > 1:
             raise ValueError("No spacing allowed")
+        elif len(v) > 50:
+            raise ValueError("50 characters max")
         return v
 
     @validator("terms_agreement")
@@ -21,11 +23,11 @@ class RegisterUserSchema(BaseModel):
             raise ValueError("You must agree to terms and conditions")
         return v
 
-    class Config:
-        error_msg_templates = {
-            "value_error.any_str.max_length": "50 characters max!",
-            "value_error.any_str.min_length": "8 characters min!",
-        }
+    @validator("password")
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("8 characters min!")
+        return v
 
 
 class VerifyOtpSchema(BaseModel):
@@ -40,12 +42,13 @@ class RequestOtpSchema(BaseModel):
 class SetNewPasswordSchema(BaseModel):
     email: EmailStr = Field(..., example="johndoe@example.com")
     otp: int
-    password: str = Field(..., example="newstrongpassword", min_length=8)
+    password: str = Field(..., example="newstrongpassword")
 
-    class Config:
-        error_msg_templates = {
-            "value_error.any_str.min_length": "8 characters min!",
-        }
+    @validator("password")
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("8 characters min!")
+        return v
 
 
 class LoginUserSchema(BaseModel):

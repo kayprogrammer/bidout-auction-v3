@@ -5,7 +5,6 @@ from starlite import (
     Response,
     Request,
     status_codes,
-    StarLiteException,
 )
 
 
@@ -26,7 +25,7 @@ class RequestError(Error):
         super().__init__(*args)
 
 
-def request_error_handler(request: Request, exc: RequestError):
+def request_error_handler(_: Request, exc: RequestError):
     err_dict = {
         "status": "failure",
         "message": exc.err_msg,
@@ -36,16 +35,14 @@ def request_error_handler(request: Request, exc: RequestError):
     return Response(status_code=exc.status_code, content=err_dict)
 
 
-def http_exception_handler(request: Request, exc: HTTPException) -> Response:
+def http_exception_handler(_: Request, exc: HTTPException) -> Response:
     return Response(
         content={"status": "failure", "message": exc.detail},
         status_code=exc.status_code,
     )
 
 
-def validation_exception_handler(
-    request: Request, exc: ValidationException
-) -> Response:
+def validation_exception_handler(_: Request, exc: ValidationException) -> Response:
     # Get the original 'detail' list of errors
     details = exc.extra
     modified_details = {}
@@ -66,7 +63,7 @@ def validation_exception_handler(
     )
 
 
-def internal_server_error_handler(request: Request, exc: Exception) -> Response:
+def internal_server_error_handler(_: Request, exc: Exception) -> Response:
     print(exc)
     return Response(
         content={
