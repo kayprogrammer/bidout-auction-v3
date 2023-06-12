@@ -7,7 +7,7 @@ from starlite import (
     HTTPException,
     ValidationException,
 )
-
+from pydantic_openapi_schema.v3_1_0 import Components, SecurityScheme, Tag
 from starlite.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 from starlite.contrib.jinja import JinjaTemplateEngine
 
@@ -34,6 +34,14 @@ openapi_config = OpenAPIConfig(
     version="3.0.0",
     description="A simple bidding API built with Litestar",
     security=[{"BearerToken": []}],
+    components=Components(
+        securitySchemes={
+            "BearerToken": SecurityScheme(
+                type="http",
+                scheme="bearer",
+            )
+        },
+    ),
     openapi_controller=MyOpenAPIController,
     root_schema_site="swagger",
 )

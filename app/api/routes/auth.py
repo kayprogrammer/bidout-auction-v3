@@ -14,6 +14,7 @@ from app.api.schemas.auth import (
 from app.common.exception_handlers import RequestError
 from app.api.schemas.base import ResponseSchema
 
+from app.db.models.accounts import User
 from app.db.managers.accounts import user_manager, otp_manager, jwt_manager
 
 from app.api.utils.emails import send_email
@@ -246,8 +247,7 @@ class LogoutView(Controller):
         description="This endpoint logs a user out from our application",
         operation="security",
     )
-    async def logout(self, db: AsyncSession) -> ResponseSchema:
-        user = None
+    async def logout(self, user: User, db: AsyncSession) -> ResponseSchema:
         jwt = await jwt_manager.get_by_user_id(db, user.id)
         await jwt_manager.delete(db, jwt)
 

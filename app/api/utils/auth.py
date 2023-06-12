@@ -45,15 +45,14 @@ class Authentication:
             return False
 
     # deocde access token from header
-    async def decodeJWT(db: AsyncSession, token: str = None):
+    async def decodeAuthorization(db: AsyncSession, token: str = None):
         if not token:
             return None
 
         try:
-            decoded = await jwt.decode(
-                token[7:], settings.SECRET_KEY, algorithms=[ALGORITHM]
-            )
-        except:
+            decoded = jwt.decode(token[7:], settings.SECRET_KEY, algorithms=[ALGORITHM])
+        except Exception as e:
+            print(e)
             return None
 
         if decoded:
