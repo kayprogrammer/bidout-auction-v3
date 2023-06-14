@@ -12,7 +12,7 @@ from starlite.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 from starlite.contrib.jinja import JinjaTemplateEngine
 
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import get_db, session_config
 from app.common.exception_handlers import (
     validation_exception_handler,
     http_exception_handler,
@@ -56,6 +56,7 @@ app = Starlite(
     route_handlers=all_routers,
     openapi_config=openapi_config,
     template_config=template_config,
+    middleware=[session_config.middleware],
     exception_handlers={
         ValidationException: validation_exception_handler,
         HTTPException: http_exception_handler,

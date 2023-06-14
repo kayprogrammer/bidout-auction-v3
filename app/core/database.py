@@ -1,4 +1,8 @@
-from starlite.plugins.sql_alchemy import SQLAlchemyConfig
+from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
+from starlite.middleware.session.sqlalchemy_backend import (
+    SQLAlchemyBackendConfig,
+    create_session_model,
+)
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,15 +13,22 @@ sqlalchemy_config = SQLAlchemyConfig(
     dependency_key="db",
 )
 
-# sqlalchemy_plugin = SQLAlchemyPlugin(config=sqlalchemy_config)
+sqlalchemy_plugin = SQLAlchemyPlugin(config=sqlalchemy_config)
 # dto_factory = DTOFactory(plugins=[sqlalchemy_plugin]) Could have used this but doesn't support input validations yet!
 
 Base = declarative_base()
+SessionModel = create_session_model(Base)
+
 AsyncSessionLocal = async_sessionmaker(
     bind=sqlalchemy_config.engine,
     autocommit=False,
     autoflush=False,
     expire_on_commit=False,
+)
+
+session_config = SQLAlchemyBackendConfig(
+    plugin=sqlalchemy_plugin,
+    model=SessionModel,
 )
 
 
