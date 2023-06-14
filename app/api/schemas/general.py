@@ -1,9 +1,8 @@
-from pydantic import validator, Field, EmailStr
-from typing import Optional, List, Any
+from pydantic import BaseModel, validator, Field, EmailStr
+from typing import List
 
 from app.api.utils.file_processors import FileProcessor
-from .base import BaseModel, ResponseSchema
-from uuid import UUID
+from .base import ResponseSchema
 
 
 # Site Details
@@ -45,18 +44,18 @@ class SubscriberResponseSchema(ResponseSchema):
 
 # Reviews
 class ReviewsDataSchema(BaseModel):
-    reviewer: Optional[Any] = Field(
-        None, example={"name": "John Doe", "avatar": "https://image.url"}
+    reviewer: dict = Field(
+        ..., example={"name": "John Doe", "avatar": "https://image.url"}
     )
     text: str
 
-    @validator("reviewer")
+    @validator("reviewer", pre=True)
     def show_reviewer(cls, v):
         avatar = None
         if v.avatar_id:
             avatar = FileProcessor.generate_file_url(
                 key=v.avatar_id,
-                folder="reviewers",
+                folder="avatars",
                 content_type=v.avatar.resource_type,
             )
         return {"name": v.full_name, "avatar": avatar}

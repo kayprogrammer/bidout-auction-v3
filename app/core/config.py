@@ -67,7 +67,7 @@ class Settings(BaseSettings):
             postgres_server = values.get("POSTGRES_SERVER")
 
         return AnyUrl.build(
-            scheme="postgresql+psycopg",
+            scheme="postgresql+asyncpg",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=postgres_server or "localhost",
