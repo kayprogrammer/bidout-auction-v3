@@ -186,13 +186,17 @@ class WatchListManager(BaseManager[WatchList]):
         return watchlist
 
     async def get_by_client_id(
-        self, db: AsyncSession, id: UUID
+        self, db: AsyncSession, id: str
     ) -> Optional[List[WatchList]]:
+        filter_clause = self.model.user_id == id
+        if not is_valid_uuid(id):
+            filter_clause = self.model.session_key == id
+
         watchlist = (
             (
                 await db.execute(
                     select(self.model)
-                    .where(or_(self.model.user_id == id, self.model.session_key == id))
+                    .where(filter_clause)
                     .order_by(self.model.created_at.desc())
                 )
             )
@@ -224,10 +228,8 @@ class WatchListManager(BaseManager[WatchList]):
         key = user_id if user_id else session_key
 
         # Avoid duplicates
-        existing_watchlist = (
-            await watchlist_manager.get_by_user_id_or_session_key_and_listing_id(
-                db, key, listing_id
-            )
+        existing_watchlist = await watchlist_manager.get_by_client_id_and_listing_id(
+            db, key, listing_id
         )
         if existing_watchlist:
             return existing_watchlist

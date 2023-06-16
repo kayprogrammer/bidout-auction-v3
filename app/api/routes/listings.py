@@ -1,4 +1,4 @@
-from starlite import Controller, Provide, get, post
+from starlite import Controller, Provide, get, post, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.listings import (
@@ -16,6 +16,7 @@ from app.api.schemas.listings import (
     BidResponseSchema,
     ResponseSchema,
 )
+from app.api.utils.validators import is_valid_uuid
 from app.db.managers.listings import (
     listing_manager,
     bid_manager,
@@ -62,7 +63,6 @@ class ListingsView(Controller):
         "/{slug:str}",
         summary="Retrieve listing's detail",
         description="This endpoint retrieves detail of a listing",
-        response={"application/json": ListingResponseSchema},
     )
     async def retrieve_listing_detail(
         self, slug: str, db: AsyncSession
@@ -84,66 +84,64 @@ class ListingsView(Controller):
         return ListingResponseSchema(message="Listing details fetched", data=data)
 
 
-# class ListingsByWatchListView(Controller):
-#     path = "/watchlist"
+class ListingsByWatchListView(Controller):
+    path = "/watchlist"
 
-#     @get(
-#         summary="Retrieve all listings by users watchlist",
-#         description="This endpoint retrieves all listings",
-#     )
-#     async def watchlist(
-#         self, db: AsyncSession, client_id: str
-#     ) -> ListingsResponseSchema:
-#         watchlists = watchlist_manager.get_by_user_id_or_session_key(db, client_id)
-#         data = [
-#             ListingDataSchema(
-#                 watchlist=True,
-#                 bids_count=watchlist.listing.bids_count,
-#                 highest_bid=watchlist.listing.highest_bid,
-#                 time_left_seconds=watchlist.listing.time_left_seconds,
-#                 **watchlist.listing.__dict__
-#             ).dict()
-#             for watchlist in watchlists
-#         ]
-#         return ListingsResponseSchema(message="Watchlists Listings fetched", data=data)
+    @get(
+        summary="Retrieve all listings by users watchlist",
+        description="This endpoint retrieves all listings",
+    )
+    async def watchlist(
+        self, db: AsyncSession, client_id: str
+    ) -> ListingsResponseSchema:
+        watchlists = await watchlist_manager.get_by_client_id(db, client_id)
+        data = [
+            ListingDataSchema(
+                watchlist=True,
+                bids_count=watchlist.listing.bids_count,
+                highest_bid=watchlist.listing.highest_bid,
+                time_left_seconds=watchlist.listing.time_left_seconds,
+                **watchlist.listing.dict()
+            )
+            for watchlist in watchlists
+        ]
+        return ListingsResponseSchema(message="Watchlist Listings fetched", data=data)
 
-#     @post(
-#         summary="Add or Remove listing from a users watchlist",
-#         description="This endpoint adds or removes a listing from a user's watchlist, authenticated or not.",
-#     )
-#     async def post(
-#         self,
-#         request,
-#         slug: str,
-#         data: AddOrRemoveWatchlistSchema,
-#         db: AsyncSession,
-#         client_id: str,
-#     ) -> ResponseSchema:
-#         listing = listing_manager.get_by_slug(db, slug)
-#         if not listing:
-#             raise RequestError(err_msg="Listing does not exist!", status_code=404)
+    @post(
+        summary="Add or Remove listing from a users watchlist",
+        description="This endpoint adds or removes a listing from a user's watchlist, authenticated or not.",
+    )
+    async def post(
+        self,
+        data: AddOrRemoveWatchlistSchema,
+        db: AsyncSession,
+        client_id: str,
+    ) -> ResponseSchema:
+        listing = await listing_manager.get_by_slug(db, data.slug)
+        if not listing:
+            raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
-#         data_entry = {"session_key": client_id, "listing_id": listing.id}
-#         if hasattr(user, "email"):
-#             # Here we know its a user object and not a session key string, now we can retrieve id.
-#             user = user.id
-#             del data_entry["session_key"]
-#             data_entry["user_id"] = user
+        data_entry = {"session_key": client_id, "listing_id": listing.id}
+        if is_valid_uuid(client_id):
+            # Here we know its a real user and not a session user.
+            del data_entry["session_key"]
+            data_entry["user_id"] = client_id
 
-#         watchlist = watchlist_manager.get_by_user_id_or_session_key_and_listing_id(
-#             db, str(user), listing.id
-#         )
+        watchlist = await watchlist_manager.get_by_client_id_and_listing_id(
+            db, client_id, listing.id
+        )
+        # If watchlist exists, then its a removal action
+        resp_message = "Listing removed from user watchlist"
+        status_code = 200
+        if not watchlist:
+            # If watchlist doesn't exist, then its a addition action
+            await watchlist_manager.create(db, data_entry)
+            resp_message = "Listing added to user watchlist"
+            status_code = 201
+        else:
+            await watchlist_manager.delete(db, watchlist)
 
-#         resp_message = "Listing removed from user watchlist"
-#         status_code = 200
-#         if not watchlist:
-#             watchlist_manager.create(db, data_entry)
-#             resp_message = "Listing added to user watchlist"
-#             status_code = 201
-#         else:
-#             watchlist_manager.delete(db, watchlist)
-
-#         return ResponseSchema(message=resp_message)
+        return Response(ResponseSchema(message=resp_message), status_code=status_code)
 
 
 # class CategoryListView(Controller):
@@ -252,7 +250,7 @@ class ListingsView(Controller):
 
 listings_handlers = [
     ListingsView,
-    # ListingsByWatchListView,
+    ListingsByWatchListView,
     # CategoryListView,
     # ListingsByCategoryView,
     # BidsView,
