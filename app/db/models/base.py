@@ -17,12 +17,11 @@ class BaseModel(Base):
         DateTime, default=datetime.now, onupdate=datetime.now
     )
 
+    def dict(self):
+        return self.__dict__
+
 
 class File(BaseModel):
     __tablename__ = "files"
 
     resource_type: Mapped[str] = Column(String)
-
-
-class GuestUser(BaseModel):
-    __tablename__ = "guestusers"

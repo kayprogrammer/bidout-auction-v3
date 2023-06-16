@@ -39,17 +39,21 @@ class Category(BaseModel):
 class Listing(BaseModel):
     __tablename__ = "listings"
 
-    auctioneer_id = Column(
+    auctioneer_id: Mapped[GUUID] = Column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
     )
+    auctioneer: Mapped[User] = relationship("User", lazy="joined")
+
     name: Mapped[str] = Column(String(70))
     slug: Mapped[str] = Column(String(), unique=True)
     desc: Mapped[str] = Column(Text())
+
     category_id: Mapped[GUUID] = Column(
         UUID(as_uuid=True),
         ForeignKey("categories.id", ondelete="SET NULL"),
         nullable=True,
     )
+    category: Mapped[Category] = relationship("Category", lazy="joined")
 
     price: Mapped[float] = Column(Numeric(precision=10, scale=2))
     closing_date: Mapped[datetime] = Column(DateTime, nullable=True)
@@ -67,7 +71,7 @@ class Listing(BaseModel):
 
     @property
     def bids_count(self):
-        return self.listing_bids.count()
+        return len(self.listing_bids)
 
     @property
     def time_left_seconds(self):
@@ -112,7 +116,7 @@ class Bid(BaseModel):
     listing: Mapped[Listing] = relationship(
         "Listing",
         foreign_keys=[listing_id],
-        backref=backref("listing_bids", lazy="dynamic"),
+        backref=backref("listing_bids", lazy="selectin"),
     )
     amount: Mapped[float] = Column(Numeric(precision=10, scale=2))
 

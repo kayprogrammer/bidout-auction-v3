@@ -19,15 +19,13 @@ class AddOrRemoveWatchlistSchema(BaseModel):
 class ListingDataSchema(BaseModel):
     name: str
 
-    auctioneer_id: UUID = Field(..., example="Ignore this")
-    auctioneer: Optional[dict] = Field(
+    auctioneer: dict = Field(
         None, example={"name": "John Doe", "avatar": "https://image.url"}
     )
 
     slug: Optional[str]
     desc: str
 
-    category_id: Optional[UUID] = Field(..., example="Ignore this")
     category: Optional[str]
 
     price: Decimal = Field(..., example=1000.00, decimal_places=2)
@@ -36,7 +34,6 @@ class ListingDataSchema(BaseModel):
     active: bool
     bids_count: int
     highest_bid: Decimal
-    image_id: UUID = Field(..., example="Ignore this")
     image: Optional[Any]
     watchlist: Optional[bool]
 
@@ -52,7 +49,7 @@ class ListingDataSchema(BaseModel):
         return v.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
     @validator("auctioneer", pre=True)
-    def show_auctioneer(cls, v, values):
+    def show_auctioneer(cls, v):
         avatar = None
         if v.avatar_id:
             avatar = FileProcessor.generate_file_url(

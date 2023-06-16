@@ -45,46 +45,43 @@ class ListingsView(Controller):
         data = [
             ListingDataSchema(
                 watchlist=True
-                if watchlist_manager.get_by_user_id_or_session_key_and_listing_id(
+                if await watchlist_manager.get_by_client_id_and_listing_id(
                     db, client_id, listing.id
                 )
                 else False,
                 bids_count=listing.bids_count,
                 highest_bid=listing.highest_bid,
                 time_left_seconds=listing.time_left_seconds,
-                **listing.__dict__
+                **listing.dict()
             )
             for listing in listings
         ]
         return ListingsResponseSchema(message="Listings fetched", data=data)
 
+    @get(
+        "/{slug:str}",
+        summary="Retrieve listing's detail",
+        description="This endpoint retrieves detail of a listing",
+        response={"application/json": ListingResponseSchema},
+    )
+    async def retrieve_listing_detail(
+        self, slug: str, db: AsyncSession
+    ) -> ListingResponseSchema:
+        listing = await listing_manager.get_by_slug(db, slug)
+        if not listing:
+            raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
-#     @get(
-#         "/<slug:str>",
-#         summary="Retrieve listing's detail",
-#         description="This endpoint retrieves detail of a listing",
-#         response={"application/json": ListingResponseSchema},
-#     )
-#     async def retrieve_listing_detail(
-#         self, slug: str, db: AsyncSession
-#     ) -> ListingResponseSchema:
-#         listing = listing_manager.get_by_slug(db, slug)
-#         if not listing:
-#             raise RequestError(err_msg="Listing does not exist!", status_code=404)
-
-#         related_listings = listing_manager.get_related_listings(
-#             db, listing.category_id, slug
-#         )[:3]
-#         data = ListingDetailDataSchema(
-#             listing=ListingDataSchema.from_orm(listing),
-#             related_listings=[
-#                 ListingDataSchema.from_orm(related_listing)
-#                 for related_listing in related_listings
-#             ],
-#         ).dict()
-#         return ListingResponseSchema.success(
-#             message="Listing details fetched", data=data
-#         )
+        related_listings = (
+            await listing_manager.get_related_listings(db, listing.category_id, slug)
+        )[:3]
+        data = ListingDetailDataSchema(
+            listing=ListingDataSchema.from_orm(listing),
+            related_listings=[
+                ListingDataSchema.from_orm(related_listing)
+                for related_listing in related_listings
+            ],
+        )
+        return ListingResponseSchema(message="Listing details fetched", data=data)
 
 
 # class ListingsByWatchListView(Controller):

@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.managers.base import BaseManager
 from app.db.models.listings import Category, Listing, WatchList, Bid
 from app.api.utils.auth import Authentication
+from app.api.utils.validators import is_valid_uuid
+
 from uuid import UUID
 from slugify import slugify
 
@@ -183,19 +185,14 @@ class WatchListManager(BaseManager[WatchList]):
         )
         return watchlist
 
-    async def get_by_user_id_or_session_key(
+    async def get_by_client_id(
         self, db: AsyncSession, id: UUID
     ) -> Optional[List[WatchList]]:
-        if not isinstance(id, UUID):
-            id = UUID(id)
-
         watchlist = (
             (
                 await db.execute(
                     select(self.model)
-                    .where(
-                        or_(self.model.user_id == id, self.model.session_key == str(id))
-                    )
+                    .where(or_(self.model.user_id == id, self.model.session_key == id))
                     .order_by(self.model.created_at.desc())
                 )
             )
@@ -204,13 +201,17 @@ class WatchListManager(BaseManager[WatchList]):
         )
         return watchlist
 
-    async def get_by_user_id_or_session_key_and_listing_id(
-        self, db: AsyncSession, id: UUID, listing_id: UUID
+    async def get_by_client_id_and_listing_id(
+        self, db: AsyncSession, id: str, listing_id: UUID
     ) -> Optional[List[WatchList]]:
+        filter_clause = self.model.user_id == id
+        if not is_valid_uuid(id):
+            filter_clause = self.model.session_key == id
+
         watchlist = (
             await db.execute(
                 select(self.model)
-                .where(or_(self.model.user_id == id, self.model.session_key == str(id)))
+                .where(filter_clause)
                 .where(self.model.listing_id == listing_id)
             )
         ).scalar_one_or_none()

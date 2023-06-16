@@ -19,6 +19,6 @@ async def get_client_id(request: Request, db: AsyncSession):
     token = request.headers.get("authorization")
     if token:
         user = await get_current_user(request, db)
-        return str(user.id)
+        return user.id
     session_key = request.headers.get("cookie")[8:]
     return session_key

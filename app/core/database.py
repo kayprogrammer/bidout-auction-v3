@@ -26,10 +26,7 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
-session_config = SQLAlchemyBackendConfig(
-    plugin=sqlalchemy_plugin,
-    model=SessionModel,
-)
+session_config = SQLAlchemyBackendConfig(plugin=sqlalchemy_plugin, model=SessionModel)
 
 
 async def get_db():
