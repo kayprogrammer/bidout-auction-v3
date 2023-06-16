@@ -91,7 +91,7 @@ class ListingsByWatchListView(Controller):
         summary="Retrieve all listings by users watchlist",
         description="This endpoint retrieves all listings",
     )
-    async def watchlist(
+    async def retrieve_watchlist(
         self, db: AsyncSession, client_id: str
     ) -> ListingsResponseSchema:
         watchlists = await watchlist_manager.get_by_client_id(db, client_id)
@@ -111,7 +111,7 @@ class ListingsByWatchListView(Controller):
         summary="Add or Remove listing from a users watchlist",
         description="This endpoint adds or removes a listing from a user's watchlist, authenticated or not.",
     )
-    async def post(
+    async def add_or_remove_watchlist_listings(
         self,
         data: AddOrRemoveWatchlistSchema,
         db: AsyncSession,
@@ -144,48 +144,49 @@ class ListingsByWatchListView(Controller):
         return Response(ResponseSchema(message=resp_message), status_code=status_code)
 
 
-# class CategoryListView(Controller):
-#     @get(
-#         summary="Retrieve all categories",
-#         description="This endpoint retrieves all categories",
-#     )
-#     async def get(self, request, db: AsyncSession) -> CategoriesResponseSchema:
-#         categories = category_manager.get_all(db)
-#         data = [CategoryDataSchema.from_orm(category) for category in categories]
-#         return CategoriesResponseSchema(message="Categories fetched", data=data)
+class CategoryListingsView(Controller):
+    path = "/categories"
 
+    @get(
+        summary="Retrieve all categories",
+        description="This endpoint retrieves all categories",
+    )
+    async def retrieve_categories(self, db: AsyncSession) -> CategoriesResponseSchema:
+        categories = await category_manager.get_all(db)
+        data = [CategoryDataSchema.from_orm(category) for category in categories]
+        return CategoriesResponseSchema(message="Categories fetched", data=data)
 
-# class ListingsByCategoryView(Controller):
-#     @get(
-#         summary="Retrieve all listings by category",
-#         description="This endpoint retrieves all listings in a particular category. Use slug 'other' for category other",
-#     )
-#     async def get(
-#         self, request, slug: str, db: AsyncSession, client_id: str
-#     ) -> ListingsResponseSchema:
-#         # listings with category 'other' have category column as null
-#         category = None
-#         if slug != "other":
-#             category = category_manager.get_by_slug(db, slug)
-#             if not category:
-#                 raise RequestError(err_msg="Invalid category", status_code=404)
+    @get(
+        "/{slug:str}",
+        summary="Retrieve all listings by category",
+        description="This endpoint retrieves all listings in a particular category. Use slug 'other' for category other",
+    )
+    async def retrieve_category_listings(
+        self, slug: str, db: AsyncSession, client_id: str
+    ) -> ListingsResponseSchema:
+        # listings with category 'other' have category column as null
+        category = None
+        if slug != "other":
+            category = await category_manager.get_by_slug(db, slug)
+            if not category:
+                raise RequestError(err_msg="Invalid category", status_code=404)
 
-#         listings = listing_manager.get_by_category(db, category)
-#         data = [
-#             ListingDataSchema(
-#                 watchlist=True
-#                 if watchlist_manager.get_by_user_id_or_session_key_and_listing_id(
-#                     db, client_id, listing.id
-#                 )
-#                 else False,
-#                 bids_count=listing.bids_count,
-#                 highest_bid=listing.highest_bid,
-#                 time_left_seconds=listing.time_left_seconds,
-#                 **listing.__dict__
-#             ).dict()
-#             for listing in listings
-#         ]
-#         return ListingsResponseSchema(message="Category Listings fetched", data=data)
+        listings = await listing_manager.get_by_category(db, category)
+        data = [
+            ListingDataSchema(
+                watchlist=True
+                if await watchlist_manager.get_by_client_id_and_listing_id(
+                    db, client_id, listing.id
+                )
+                else False,
+                bids_count=listing.bids_count,
+                highest_bid=listing.highest_bid,
+                time_left_seconds=listing.time_left_seconds,
+                **listing.dict()
+            )
+            for listing in listings
+        ]
+        return ListingsResponseSchema(message="Category Listings fetched", data=data)
 
 
 # class BidsView(Controller):
@@ -251,12 +252,11 @@ class ListingsByWatchListView(Controller):
 listings_handlers = [
     ListingsView,
     ListingsByWatchListView,
-    # CategoryListView,
+    CategoryListingsView,
     # ListingsByCategoryView,
     # BidsView,
 ]
 
-# listings_router.add_route(ListingsView.as_view(), "/")
 # listings_router.add_route(CategoryListView.as_view(), "/categories")
 # listings_router.add_route(ListingsByCategoryView.as_view(), "/categories/<slug>")
 # listings_router.add_route(BidsView.as_view(), "/<slug>/bids")
