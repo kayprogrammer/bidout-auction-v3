@@ -8,7 +8,7 @@ from sqlalchemy import (
     Numeric,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, relationship, validates
+from sqlalchemy.orm import Mapped, relationship, validates, backref
 from sqlalchemy.sql import func
 
 from sqlalchemy.dialects.postgresql import UUID
@@ -62,13 +62,6 @@ class Listing(BaseModel):
     )
     image: Mapped[File] = relationship("File", lazy="joined")
 
-    listing_bids: Mapped["Bid"] = relationship(
-        "Bid",
-        foreign_keys="Bid.listing_id",
-        back_populates="listing",
-        lazy="dynamic",
-    )
-
     def __repr__(self):
         return self.name
 
@@ -117,7 +110,9 @@ class Bid(BaseModel):
         UUID(as_uuid=True), ForeignKey("listings.id", ondelete="CASCADE")
     )
     listing: Mapped[Listing] = relationship(
-        "Listing", foreign_keys=[listing_id], back_populates="listing_bids"
+        "Listing",
+        foreign_keys=[listing_id],
+        backref=backref("listing_bids", lazy="dynamic"),
     )
     amount: Mapped[float] = Column(Numeric(precision=10, scale=2))
 
