@@ -1,4 +1,4 @@
-from starlite import Controller, Provide, get, post, Response
+from starlite import Controller, Response, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.listings import (
@@ -50,8 +50,6 @@ class ListingsView(Controller):
                     db, client_id, listing.id
                 )
                 else False,
-                bids_count=listing.bids_count,
-                highest_bid=listing.highest_bid,
                 time_left_seconds=listing.time_left_seconds,
                 **listing.dict()
             )
@@ -98,8 +96,6 @@ class ListingsByWatchListView(Controller):
         data = [
             ListingDataSchema(
                 watchlist=True,
-                bids_count=watchlist.listing.bids_count,
-                highest_bid=watchlist.listing.highest_bid,
                 time_left_seconds=watchlist.listing.time_left_seconds,
                 **watchlist.listing.dict()
             )
@@ -179,8 +175,6 @@ class CategoryListingsView(Controller):
                     db, client_id, listing.id
                 )
                 else False,
-                bids_count=listing.bids_count,
-                highest_bid=listing.highest_bid,
                 time_left_seconds=listing.time_left_seconds,
                 **listing.dict()
             )
@@ -189,74 +183,80 @@ class CategoryListingsView(Controller):
         return ListingsResponseSchema(message="Category Listings fetched", data=data)
 
 
-# class BidsView(Controller):
-#     @get(
-#         summary="Retrieve bids in a listing",
-#         description="This endpoint retrieves at most 3 bids from a particular listing.",
-#     )
-#     async def get(self, request, db: AsyncSession, slug: str) -> BidsResponseSchema:
-#         listing = listing_manager.get_by_slug(db, slug)
-#         if not listing:
-#             raise RequestError(err_msg="Listing does not exist!", status_code=404)
+class BidsView(Controller):
+    path = "/{slug:str}/bids"
 
-#         bids = bid_manager.get_by_listing_id(db, listing.id)[:3]
+    @get(
+        summary="Retrieve bids in a listing",
+        description="This endpoint retrieves at most 3 bids from a particular listing.",
+    )
+    async def retrieve_listing_bids(
+        self, db: AsyncSession, slug: str
+    ) -> BidsResponseSchema:
+        listing = await listing_manager.get_by_slug(db, slug)
+        if not listing:
+            raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
-#         data = BidsResponseDataSchema(
-#             listing=listing.name,
-#             bids=[BidDataSchema.from_orm(bid) for bid in bids],
-#         ).dict()
-#         return BidsResponseSchema(message="Listing Bids fetched", data=data)
+        bids = (await bid_manager.get_by_listing_id(db, listing.id))[:3]
 
-#     @post(
-#         summary="Add a bid to a listing",
-#         description="This endpoint adds a bid to a particular listing.",
-#     )
-#     async def post(
-#         self, request, slug: str, data: CreateBidSchema, db: AsyncSession, user: User
-#     ) -> BidResponseSchema:
-#         listing = listing_manager.get_by_slug(db, slug)
-#         if not listing:
-#             raise RequestError(err_msg="Listing does not exist!", status_code=404)
+        data = BidsResponseDataSchema(
+            listing=listing.name,
+            bids=[BidDataSchema.from_orm(bid) for bid in bids],
+        )
+        return BidsResponseSchema(message="Listing Bids fetched", data=data)
 
-#         amount = data["amount"]
-#         if user.id == listing.auctioneer_id:
-#             raise RequestError(
-#                 err_msg="You cannot bid your own product!", status_code=403
-#             )
-#         elif not listing.active:
-#             raise RequestError(err_msg="This auction is closed!", status_code=410)
-#         elif listing.time_left < 1:
-#             raise RequestError(
-#                 err_msg="This auction is expired and closed!", status_code=410
-#             )
-#         elif amount < listing.price:
-#             raise RequestError(
-#                 err_msg="Bid amount cannot be less than the bidding price!"
-#             )
-#         elif amount <= listing.highest_bid:
-#             raise RequestError(err_msg="Bid amount must be more than the highest bid!")
+    @post(
+        summary="Add a bid to a listing",
+        description="This endpoint adds a bid to a particular listing.",
+    )
+    async def post(
+        self, slug: str, data: CreateBidSchema, db: AsyncSession, user: User
+    ) -> BidResponseSchema:
+        listing = await listing_manager.get_by_slug(db, slug)
+        if not listing:
+            raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
-#         bid = bid_manager.get_by_user_and_listing_id(db, user.id, listing.id)
-#         if bid:
-#             bid = bid_manager.update(db, bid, {"amount": amount})
-#         else:
-#             bid = bid_manager.create(
-#                 db,
-#                 {"user_id": user.id, "listing_id": listing.id, "amount": amount},
-#             )
+        amount = data.amount
+        bids_count = listing.bids_count
+        if user.id == listing.auctioneer_id:
+            raise RequestError(
+                err_msg="You cannot bid your own product!", status_code=403
+            )
+        elif not listing.active:
+            raise RequestError(err_msg="This auction is closed!", status_code=410)
+        elif listing.time_left < 1:
+            raise RequestError(
+                err_msg="This auction is expired and closed!", status_code=410
+            )
+        elif amount < listing.price:
+            raise RequestError(
+                err_msg="Bid amount cannot be less than the bidding price!"
+            )
+        elif amount <= listing.highest_bid:
+            raise RequestError(err_msg="Bid amount must be more than the highest bid!")
 
-#         data = BidDataSchema.from_orm(bid).dict()
-#         return BidResponseSchema(message="Bid added to listing", data=data)
+        bid = await bid_manager.get_by_user_and_listing_id(db, user.id, listing.id)
+        if bid:
+            # Update existing bid
+            bid = await bid_manager.update(db, bid, {"amount": amount})
+        else:
+            # Create new bid
+            bids_count += 1
+            bid = await bid_manager.create(
+                db,
+                {"user_id": user.id, "listing_id": listing.id, "amount": amount},
+            )
+
+        await listing_manager.update(
+            db, listing, {"highest_bid": amount, "bids_count": bids_count}
+        )
+        data = BidDataSchema.from_orm(bid)
+        return BidResponseSchema(message="Bid added to listing", data=data)
 
 
 listings_handlers = [
     ListingsView,
     ListingsByWatchListView,
     CategoryListingsView,
-    # ListingsByCategoryView,
-    # BidsView,
+    BidsView,
 ]
-
-# listings_router.add_route(CategoryListView.as_view(), "/categories")
-# listings_router.add_route(ListingsByCategoryView.as_view(), "/categories/<slug>")
-# listings_router.add_route(BidsView.as_view(), "/<slug>/bids")

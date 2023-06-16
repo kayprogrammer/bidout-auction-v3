@@ -6,10 +6,15 @@ from app.common.exception_handlers import RequestError
 
 async def get_current_user(request: Request, db: AsyncSession):
     token = request.headers.get("authorization")
+    if not token:
+        raise RequestError(
+            err_msg="Unauthorized User!",
+            status_code=401,
+        )
     user = await Authentication.decodeAuthorization(db, token)
     if not user:
         raise RequestError(
-            err_msg="Token is Invalid or Expired",
+            err_msg="Auth Token is Invalid or Expired",
             status_code=401,
         )
     return user
@@ -19,6 +24,6 @@ async def get_client_id(request: Request, db: AsyncSession):
     token = request.headers.get("authorization")
     if token:
         user = await get_current_user(request, db)
-        return user.id
+        return str(user.id)
     session_key = request.headers.get("cookie")[8:]
     return session_key

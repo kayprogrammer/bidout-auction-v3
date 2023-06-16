@@ -2,7 +2,6 @@ from typing import Optional, List, Any
 
 from pydantic import validator, Field
 from datetime import datetime
-from uuid import UUID
 from .base import BaseModel, ResponseSchema
 
 from app.api.utils.file_processors import FileProcessor
@@ -119,11 +118,7 @@ class CreateBidSchema(BaseModel):
 
 
 class BidDataSchema(BaseModel):
-    id: UUID
-    user_id: UUID = Field(..., example="Ignore this")
-    user: Optional[dict] = Field(
-        None, example={"name": "John Doe", "avatar": "https://image.url"}
-    )
+    user: dict = Field(..., example={"name": "John Doe", "avatar": "https://image.url"})
     amount: Decimal = Field(..., example=1000.00, decimal_places=2)
     created_at: datetime
     updated_at: datetime

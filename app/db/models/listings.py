@@ -3,6 +3,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     Numeric,
@@ -56,6 +57,8 @@ class Listing(BaseModel):
     category: Mapped[Category] = relationship("Category", lazy="joined")
 
     price: Mapped[float] = Column(Numeric(precision=10, scale=2))
+    highest_bid: Mapped[float] = Column(Numeric(precision=10, scale=2), default=0.00)
+    bids_count: Mapped[int] = Column(Integer, default=0)
     closing_date: Mapped[datetime] = Column(DateTime, nullable=True)
     active: Mapped[bool] = Column(Boolean, default=True)
 
@@ -70,10 +73,6 @@ class Listing(BaseModel):
         return self.name
 
     @property
-    def bids_count(self):
-        return len(self.listing_bids)
-
-    @property
     def time_left_seconds(self):
         remaining_time = self.closing_date - datetime.utcnow()
         remaining_seconds = remaining_time.total_seconds()
@@ -85,24 +84,6 @@ class Listing(BaseModel):
             return 0
         return self.time_left_seconds
 
-    @property
-    def highest_bid(self):
-        highest_bid = 0.00
-        related_bids = self.listing_bids
-        if related_bids:
-            highest_bid = (
-                related_bids.session.query(func.max(Bid.amount))
-                .filter_by(listing_id=self.id)
-                .scalar()
-            )
-            highest_bid = related_bids.filter_by(amount=highest_bid).first()
-            if highest_bid:
-                highest_bid = highest_bid.amount
-            else:
-                highest_bid = 0.00
-
-        return highest_bid
-
 
 class Bid(BaseModel):
     __tablename__ = "bids"
@@ -110,13 +91,10 @@ class Bid(BaseModel):
     user_id: Mapped[GUUID] = Column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
     )
+    user: Mapped[User] = relationship("User", lazy="joined")
+
     listing_id: Mapped[GUUID] = Column(
         UUID(as_uuid=True), ForeignKey("listings.id", ondelete="CASCADE")
-    )
-    listing: Mapped[Listing] = relationship(
-        "Listing",
-        foreign_keys=[listing_id],
-        backref=backref("listing_bids", lazy="selectin"),
     )
     amount: Mapped[float] = Column(Numeric(precision=10, scale=2))
 
