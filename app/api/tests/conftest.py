@@ -1,9 +1,13 @@
 from starlite import AsyncTestClient
+from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
 from app.api.utils.auth import Authentication
-from app.core.database import Base
-from app.core.security import get_password_hash
+from app.core.database import Base, session_config
 from app.db.managers.accounts import jwt_manager, user_manager
+from app.db.managers.listings import category_manager, listing_manager
+from app.db.managers.base import file_manager
+
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 import pytest, asyncio
@@ -63,7 +67,8 @@ async def database(app):
 
 @pytest.fixture
 async def client(app):
-    async with AsyncTestClient(app["app"]) as client:
+    async with AsyncTestClient(app=app["app"], session_config=session_config) as client:
+        print(client.headers)
         yield client
 
 
@@ -118,3 +123,25 @@ async def authorized_client(verified_user, client, database):
     )
     client.headers = {**client.headers, "Authorization": f"Bearer {access}"}
     return client
+
+
+@pytest.fixture
+async def create_listing(verified_user, database):
+    # Create Category
+    category = await category_manager.create(database, {"name": "TestCategory"})
+
+    # Create File
+    file = await file_manager.create(database, {"resource_type": "image/jpeg"})
+
+    # Create Listing
+    listing_dict = {
+        "auctioneer_id": verified_user.id,
+        "name": "New Listing",
+        "desc": "New description",
+        "category_id": category.id,
+        "price": 1000.00,
+        "closing_date": datetime.now() + timedelta(days=1),
+        "image_id": file.id,
+    }
+    listing = await listing_manager.create(database, listing_dict)
+    return {"user": verified_user, "listing": listing, "category": category}
