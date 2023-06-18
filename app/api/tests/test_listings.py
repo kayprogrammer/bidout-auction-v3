@@ -17,7 +17,7 @@ async def test_retrieve_all_listings(client, create_listing):
     assert any(isinstance(obj["name"], str) for obj in data)
 
 
-async def test_retrieve_particular_listng(client, create_listing, mocker):
+async def test_retrieve_particular_listng(mocker, client, create_listing):
     listing = create_listing["listing"]
 
     # Verify that a particular listing retrieval fails with an invalid slug
@@ -37,16 +37,16 @@ async def test_retrieve_particular_listng(client, create_listing, mocker):
         "data": {
             "listing": {
                 "name": listing.name,
-                "auctioneer": mocker.ANY,  # cos our pydantic validator uses SessionLocal and not TestSessionLocal
+                "auctioneer": mocker.ANY,
                 "slug": listing.slug,
                 "desc": listing.desc,
-                "category": mocker.ANY,  # cos our pydantic validator uses SessionLocal and not TestSessionLocal
-                "price": listing.price,
+                "category": 'TestCategory',
+                "price": str(listing.price),
                 "closing_date": mocker.ANY,
                 "time_left_seconds": mocker.ANY,
                 "active": True,
                 "bids_count": 0,
-                "highest_bid": 0,
+                "highest_bid": "0.00",
                 "image": mocker.ANY,
                 "watchlist": None,
             },

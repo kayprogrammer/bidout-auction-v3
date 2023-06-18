@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     def assemble_postgres_connection(
         cls, v: Optional[str], values: Dict[str, str]
     ) -> str:
+    
         # Assemble postgres url
         if isinstance(v, str):
             return v
@@ -67,7 +68,7 @@ class Settings(BaseSettings):
             postgres_server = values.get("POSTGRES_SERVER")
 
         return AnyUrl.build(
-            scheme="postgresql+asyncpg",
+            scheme="postgresql+psycopg",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=postgres_server or "localhost",

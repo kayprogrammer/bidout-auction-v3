@@ -285,5 +285,5 @@ async def test_logout(authorized_client):
     assert response.status_code == 401
     assert response.json() == {
         "status": "failure",
-        "message": "Token is Invalid or Expired",
+        "message": "Auth Token is Invalid or Expired",
     }

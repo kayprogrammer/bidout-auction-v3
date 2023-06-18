@@ -32,10 +32,7 @@ class BaseManager(Generic[ModelType]):
         return result
 
     async def get_by_id(self, db: AsyncSession, id: UUID) -> Optional[ModelType]:
-        item = (
-            await db.execute(select(self.model).where(self.model.id == id))
-        ).scalar_one_or_none()
-        return item
+        return (await db.execute(select(self.model).where(self.model.id == id))).scalar_one_or_none()
 
     async def create(
         self, db: AsyncSession, obj_in: Optional[ModelType] = {}

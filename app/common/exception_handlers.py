@@ -6,6 +6,7 @@ from starlite import (
     Request,
     status_codes,
 )
+from starlite.status_codes import HTTP_500_INTERNAL_SERVER_ERROR
 
 
 class Error(Exception):
@@ -72,3 +73,10 @@ def internal_server_error_handler(_: Request, exc: Exception) -> Response:
         },
         status_code=500,
     )
+
+exc_handlers = {
+    ValidationException: validation_exception_handler,
+    HTTPException: http_exception_handler,
+    HTTP_500_INTERNAL_SERVER_ERROR: internal_server_error_handler,
+    RequestError: request_error_handler,
+}

@@ -1,20 +1,18 @@
 from starlite import AsyncTestClient
-from starlite.plugins.sql_alchemy import SQLAlchemyConfig, SQLAlchemyPlugin
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.api.utils.auth import Authentication
-from app.core.database import Base
+from app.core.database import Base, session_config
 from app.db.managers.accounts import jwt_manager, user_manager
 from app.db.managers.listings import category_manager, listing_manager
 from app.db.managers.base import file_manager
+
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 import pytest, asyncio, secrets
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
-from app.core.config import settings
-TEST_DATABASE = f"{settings.SQLALCHEMY_DATABASE_URL}_test"
 
 
 @pytest.fixture(scope="session")
@@ -26,57 +24,54 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-async def db_config():
-    # pg_host = test_db.host
-    # pg_port = test_db.port
-    # pg_user = test_db.user
-    # pg_db = test_db.dbname
-    # pg_password = test_db.password
+async def engine(test_db):
+    pg_host = test_db.host
+    pg_port = test_db.port
+    pg_user = test_db.user
+    pg_db = test_db.dbname
+    pg_password = test_db.password
 
-    # with DatabaseJanitor(
-    #     pg_user, pg_host, pg_port, pg_db, test_db.version, pg_password
-    # ):
-    connection_str = TEST_DATABASE
-
-    sqlalchemy_config = SQLAlchemyConfig(
-        connection_string=connection_str,
-        dependency_key="db",
-        session_maker_class=async_sessionmaker,
-    )
-    return sqlalchemy_config
+    with DatabaseJanitor(
+        pg_user, pg_host, pg_port, pg_db, test_db.version, pg_password
+    ):
+        connection_str = f"postgresql+psycopg://{pg_user}:@{pg_host}:{pg_port}/{pg_db}"
+        engine = create_async_engine(connection_str, future=True)
+        yield engine
+        await engine.dispose()
 
 
 @pytest.fixture(autouse=True)
-async def setup_db(db_config):
-    async with db_config.engine.begin() as conn:
+async def setup_db(engine):
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
 
 @pytest.fixture
-def app(mocker, db_config):
-    mocker.patch("app.core.database.sqlalchemy_plugin", new=SQLAlchemyPlugin(config=db_config))
+def app(mocker, engine):
+    TestAsyncSessionLocal = async_sessionmaker(
+        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
+    )
+    mocker.patch("app.core.database.AsyncSessionLocal", new=TestAsyncSessionLocal)
     from app.main import app
-    return app
 
+    return {"app": app, "db_session": TestAsyncSessionLocal}
 
 
 @pytest.fixture
-async def database(db_config):
-    TestAsyncSessionLocal = async_sessionmaker(
-        bind=db_config.engine,
-        autocommit=False,
-        autoflush=False,
-        expire_on_commit=False,
-    )
-    async with TestAsyncSessionLocal() as db:
+async def database(app):
+    session = app["db_session"]
+    async with session() as db:
         yield db
 
 
 @pytest.fixture
 async def client(app):
-    async with AsyncTestClient(app=app) as client:
-        client.headers = {**client.headers, "cookie": f"session={secrets.token_hex(32)}"}
+    async with AsyncTestClient(app=app["app"], session_config=session_config) as client:
+        client.set_session_data({})
+        print(client.headers)
+        secrets.token_hex(32)
+        client.headers = {**client.headers, "Authorization": f"Bearer {access}"}
         yield client
 
 

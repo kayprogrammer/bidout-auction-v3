@@ -243,7 +243,6 @@ class LogoutView(Controller):
     @get(
         summary="Logout a user",
         description="This endpoint logs a user out from our application",
-        operation="security",
     )
     async def logout(self, user: User, db: AsyncSession) -> ResponseSchema:
         jwt = await jwt_manager.get_by_user_id(db, user.id)

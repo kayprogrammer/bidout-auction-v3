@@ -39,7 +39,7 @@ class User(BaseModel):
         "Jwt",
         foreign_keys="Jwt.user_id",
         back_populates="user",
-        lazy=True,
+        lazy="selectin",
         uselist=False,
     )
 
