@@ -14,6 +14,7 @@ import pytest, asyncio, secrets
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
 from app.core.config import settings
+
 TEST_DATABASE = f"{settings.SQLALCHEMY_DATABASE_URL}_test"
 
 
@@ -55,10 +56,12 @@ async def setup_db(db_config):
 
 @pytest.fixture
 def app(mocker, db_config):
-    mocker.patch("app.core.database.sqlalchemy_plugin", new=SQLAlchemyPlugin(config=db_config))
+    mocker.patch(
+        "app.core.database.sqlalchemy_plugin", new=SQLAlchemyPlugin(config=db_config)
+    )
     from app.main import app
-    return app
 
+    return app
 
 
 @pytest.fixture
@@ -76,7 +79,10 @@ async def database(db_config):
 @pytest.fixture
 async def client(app):
     async with AsyncTestClient(app=app) as client:
-        client.headers = {**client.headers, "cookie": f"session={secrets.token_hex(32)}"}
+        client.headers = {
+            **client.headers,
+            "cookie": f"session={secrets.token_hex(32)}",
+        }
         yield client
 
 

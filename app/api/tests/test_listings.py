@@ -40,7 +40,7 @@ async def test_retrieve_particular_listng(mocker, client, create_listing):
                 "auctioneer": mocker.ANY,
                 "slug": listing.slug,
                 "desc": listing.desc,
-                "category": 'TestCategory',
+                "category": "TestCategory",
                 "price": str(listing.price),
                 "closing_date": mocker.ANY,
                 "time_left_seconds": mocker.ANY,

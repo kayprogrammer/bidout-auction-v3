@@ -13,7 +13,10 @@ auth_router = Router(
     path="/api/v3/auth",
     route_handlers=auth_handlers,
     tags=["Auth"],
-    dependencies={"user": Provide(get_current_user)},
+    dependencies={
+        "user": Provide(get_current_user),
+        "client_id": Provide(get_client_id),
+    },
 )
 
 listings_router = Router(

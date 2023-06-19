@@ -1,4 +1,4 @@
-from starlite import Controller, get, post
+from starlite import Controller, Request, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.auth import (
@@ -16,6 +16,7 @@ from app.api.schemas.base import ResponseSchema
 
 from app.db.models.accounts import User
 from app.db.managers.accounts import user_manager, otp_manager, jwt_manager
+from app.db.managers.listings import watchlist_manager
 
 from app.api.utils.emails import send_email
 from app.core.security import verify_password
@@ -170,7 +171,7 @@ class LoginView(Controller):
         description="This endpoint generates new access and refresh tokens for authentication",
     )
     async def login(
-        self, data: LoginUserSchema, db: AsyncSession
+        self, request: Request, data: LoginUserSchema, client_id: str, db: AsyncSession
     ) -> TokensResponseSchema:
         email = data.email
         plain_password = data.password
@@ -189,19 +190,18 @@ class LoginView(Controller):
             db, {"user_id": user.id, "access": access, "refresh": refresh}
         )
 
-        # # Move all guest user watchlists to the authenticated user watchlists
-        # session_key = request.cookies.get("session_key")
-        # guest_user_watchlists = watchlist_manager.get_by_session_key(
-        #     db, session_key, user.id
-        # )
-        # if len(guest_user_watchlists) > 0:
-        #     data_to_create = [
-        #         {"user_id": user.id, "listing_id": watchlist.listing_id}.copy()
-        #         for watchlist in guest_user_watchlists
-        #     ]
-        #     watchlist_manager.bulk_create(db, data_to_create)
+        # Move all guest user watchlists to the authenticated user watchlists
+        guest_user_watchlists = await watchlist_manager.get_by_session_key(
+            db, client_id, user.id
+        )
+        if len(guest_user_watchlists) > 0:
+            data_to_create = [
+                {"user_id": user.id, "listing_id": listing_id}.copy()
+                for listing_id in guest_user_watchlists
+            ]
+            await watchlist_manager.bulk_create(db, data_to_create)
 
-        # response.delete_cookie("session_key")
+        request.clear_session()
         return TokensResponseSchema(
             message="Login successful", data={"access": access, "refresh": refresh}
         )
@@ -245,9 +245,7 @@ class LogoutView(Controller):
         description="This endpoint logs a user out from our application",
     )
     async def logout(self, user: User, db: AsyncSession) -> ResponseSchema:
-        jwt = await jwt_manager.get_by_user_id(db, user.id)
-        await jwt_manager.delete(db, jwt)
-
+        await jwt_manager.delete(db, user.jwt)
         return ResponseSchema(message="Logout successful")
 
 

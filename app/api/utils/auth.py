@@ -49,7 +49,9 @@ class Authentication:
         try:
             decoded = jwt.decode(token[7:], settings.SECRET_KEY, algorithms=[ALGORITHM])
             user = await user_manager.get_by_id(db, decoded["user_id"])
-            if not user or not user.jwt: # to confirm the user existence and validity of the token (it's existence in our database)
+            if (
+                not user or not user.jwt
+            ):  # to confirm the user existence and validity of the token (it's existence in our database)
                 return None
             return user
         except Exception as e:

@@ -74,6 +74,7 @@ def internal_server_error_handler(_: Request, exc: Exception) -> Response:
         status_code=500,
     )
 
+
 exc_handlers = {
     ValidationException: validation_exception_handler,
     HTTPException: http_exception_handler,
