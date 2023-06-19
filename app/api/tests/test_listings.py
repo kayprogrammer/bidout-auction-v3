@@ -59,14 +59,14 @@ async def test_get_user_watchlists_listng(authorized_client, create_listing, dat
     listing = create_listing["listing"]
     user_id = create_listing["user"].id
     await watchlist_manager.create(
-        database, {"user_id": user_id, "listing_id": listing.id}
+        database, {"user_id": str(user_id), "listing_id": listing.id}
     )
 
     response = await authorized_client.get(f"{BASE_URL_PATH}/watchlist")
     assert response.status_code == 200
     json_resp = response.json()
     assert json_resp["status"] == "success"
-    assert json_resp["message"] == "Watchlists Listings fetched"
+    assert json_resp["message"] == "Watchlist Listings fetched"
     data = json_resp["data"]
     assert len(data) > 0
     assert any(isinstance(obj["name"], str) for obj in data)
@@ -190,10 +190,10 @@ async def test_create_bid(
     }
 
     # Update headers with another user's token
-    access = Authentication.create_access_token(
+    access = await Authentication.create_access_token(
         {"user_id": str(another_verified_user.id)}
     )
-    refresh = Authentication.create_refresh_token()
+    refresh = await Authentication.create_refresh_token()
     await jwt_manager.create(
         database,
         {"user_id": another_verified_user.id, "access": access, "refresh": refresh},
@@ -220,7 +220,7 @@ async def test_create_bid(
         "message": "Bid added to listing",
         "data": {
             "user": mocker.ANY,
-            "amount": 10000,
+            "amount": "10000.00",
             "created_at": mocker.ANY,
             "updated_at": mocker.ANY,
         },

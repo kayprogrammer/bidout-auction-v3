@@ -17,7 +17,7 @@ async def test_register_user(mocker, client):
     }
 
     # Verify that a new user can be registered successfully
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(f"{BASE_URL_PATH}/register", json=user_in)
     assert response.status_code == 201
     assert response.json() == {
@@ -27,7 +27,7 @@ async def test_register_user(mocker, client):
     }
 
     # Verify that a user with the same email cannot be registered again
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(f"{BASE_URL_PATH}/register", json=user_in)
     assert response.status_code == 422
     assert response.json() == {
@@ -51,7 +51,7 @@ async def test_verify_email(mocker, client, test_user, database):
     }
     # Verify that the email verification succeeds with a valid otp
     otp = await otp_manager.create(database, {"user_id": test_user.id})
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(
         f"{BASE_URL_PATH}/verify-email",
         json={"email": test_user.email, "otp": otp.code},
@@ -67,7 +67,7 @@ async def test_resend_verification_email(mocker, client, test_user, database):
     user_in = {"email": test_user.email}
 
     # Verify that an unverified user can get a new email
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     # Then, attempt to resend the verification email
     response = await client.post(
         f"{BASE_URL_PATH}/resend-verification-email", json=user_in
@@ -82,7 +82,7 @@ async def test_resend_verification_email(mocker, client, test_user, database):
     test_user = await user_manager.update(
         database, test_user, {"is_email_verified": True}
     )
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(
         f"{BASE_URL_PATH}/resend-verification-email",
         json={"email": test_user.email},
@@ -94,7 +94,7 @@ async def test_resend_verification_email(mocker, client, test_user, database):
     }
 
     # Verify that an error is raised when attempting to resend the verification email for a user that doesn't exist
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(
         f"{BASE_URL_PATH}/resend-verification-email",
         json={"email": "invalid@example.com"},
@@ -195,7 +195,7 @@ async def test_get_password_otp(mocker, client, verified_user):
     password = "testverifieduser123"
     user_in = {"email": email, "password": password}
 
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     # Then, attempt to get password reset token
     response = await client.post(
         f"{BASE_URL_PATH}/send-password-reset-otp", json=user_in
@@ -207,7 +207,7 @@ async def test_get_password_otp(mocker, client, verified_user):
     }
 
     # Verify that an error is raised when attempting to get password reset token for a user that doesn't exist
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(
         f"{BASE_URL_PATH}/send-password-reset-otp",
         json={"email": "invalid@example.com"},
@@ -256,7 +256,7 @@ async def test_reset_password(mocker, client, verified_user, database):
     # Verify that password reset succeeds
     otp = (await otp_manager.create(database, {"user_id": verified_user.id})).code
     password_reset_data["otp"] = otp
-    mocker.patch("app.api.utils.emails.send_email")
+    mocker.patch("app.api.utils.emails.send_email", new="")
     response = await client.post(
         f"{BASE_URL_PATH}/set-new-password",
         json=password_reset_data,

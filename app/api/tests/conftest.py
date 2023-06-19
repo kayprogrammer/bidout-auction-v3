@@ -13,9 +13,6 @@ from pytest_postgresql.janitor import DatabaseJanitor
 import pytest, asyncio, secrets
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
-from app.core.config import settings
-
-TEST_DATABASE = f"{settings.SQLALCHEMY_DATABASE_URL}_test"
 
 
 @pytest.fixture(scope="session")
@@ -27,24 +24,23 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-async def db_config():
-    # pg_host = test_db.host
-    # pg_port = test_db.port
-    # pg_user = test_db.user
-    # pg_db = test_db.dbname
-    # pg_password = test_db.password
+async def db_config(test_db):
+    pg_host = test_db.host
+    pg_port = test_db.port
+    pg_user = test_db.user
+    pg_db = test_db.dbname
+    pg_password = test_db.password
 
-    # with DatabaseJanitor(
-    #     pg_user, pg_host, pg_port, pg_db, test_db.version, pg_password
-    # ):
-    connection_str = TEST_DATABASE
+    with DatabaseJanitor(
+        pg_user, pg_host, pg_port, pg_db, test_db.version, pg_password
+    ):
+        connection_str = f"postgresql+psycopg://{pg_user}:@{pg_host}:{pg_port}/{pg_db}"
 
-    sqlalchemy_config = SQLAlchemyConfig(
-        connection_string=connection_str,
-        dependency_key="db",
-        session_maker_class=async_sessionmaker,
-    )
-    return sqlalchemy_config
+        sqlalchemy_config = SQLAlchemyConfig(
+            connection_string=connection_str,
+            dependency_key="db",
+        )
+        yield sqlalchemy_config
 
 
 @pytest.fixture(autouse=True)
