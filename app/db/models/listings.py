@@ -9,8 +9,7 @@ from sqlalchemy import (
     Numeric,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, relationship, validates, backref
-from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, relationship, validates
 
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import UUID as GUUID  # General UUID

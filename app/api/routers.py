@@ -2,6 +2,7 @@ from starlite import Router, Provide
 from app.api.routes.general import general_handlers
 from app.api.routes.auth import auth_handlers
 from app.api.routes.listings import listings_handlers
+from app.api.routes.auctioneer import auctioneer_handlers
 from app.api.routes.healthcheck import healthcheck
 from app.api.dependencies import get_client_id, get_current_user
 
@@ -29,10 +30,25 @@ listings_router = Router(
     },
 )
 
+auctioneer_router = Router(
+    path="/api/v3/auctioneer",
+    route_handlers=auctioneer_handlers,
+    tags=["Auctioneer"],
+    dependencies={
+        "user": Provide(get_current_user),
+    },
+)
+
 healthcheck_router = Router(
     path="/api/v3/healthcheck",
     route_handlers=[healthcheck],
     tags=["HealthCheck"],
 )
 
-all_routers = [general_router, auth_router, listings_router, healthcheck_router]
+all_routers = [
+    general_router,
+    auth_router,
+    listings_router,
+    auctioneer_router,
+    healthcheck_router,
+]

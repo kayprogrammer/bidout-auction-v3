@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from jose import jwt
 
 from app.core.config import settings
-from app.db.managers.accounts import user_manager
+from app.db.managers.accounts import jwt_manager
 
 ALGORITHM = "HS256"
 
@@ -48,12 +48,10 @@ class Authentication:
     async def decodeAuthorization(db: AsyncSession, token: str):
         try:
             decoded = jwt.decode(token[7:], settings.SECRET_KEY, algorithms=[ALGORITHM])
-            user = await user_manager.get_by_id(db, decoded["user_id"])
-            if (
-                not user or not user.jwt
-            ):  # to confirm the user existence and validity of the token (it's existence in our database)
+            jwt_obj = await jwt_manager.get_by_user_id(db, decoded["user_id"])
+            if not jwt_obj:
                 return None
-            return user
+            return jwt_obj.user
         except Exception as e:
             print(e)
             return None
