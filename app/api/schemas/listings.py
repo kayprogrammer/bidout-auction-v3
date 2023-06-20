@@ -1,8 +1,8 @@
 from typing import Optional, List, Any
 
-from pydantic import validator, Field
+from pydantic import BaseModel, validator, Field
 from datetime import datetime
-from .base import BaseModel, ResponseSchema
+from .base import ResponseSchema
 
 from app.api.utils.file_processors import FileProcessor
 
