@@ -2,9 +2,10 @@ from starlite import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.utils.auth import Authentication
 from app.common.exception_handlers import RequestError
+from app.db.models.accounts import User
 
 
-async def get_current_user(request: Request, db: AsyncSession):
+async def get_current_user(request: Request, db: AsyncSession) -> User:
     token = request.headers.get("authorization")
     if not token:
         raise RequestError(
@@ -20,7 +21,7 @@ async def get_current_user(request: Request, db: AsyncSession):
     return user
 
 
-async def get_client_id(request: Request, db: AsyncSession):
+async def get_client_id(request: Request, db: AsyncSession) -> str:
     token = request.headers.get("authorization")
     if token:
         user = await get_current_user(request, db)

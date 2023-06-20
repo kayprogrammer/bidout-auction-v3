@@ -1,7 +1,6 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 
 from app.core.security import get_password_hash
 from app.db.managers.base import BaseManager
@@ -34,11 +33,7 @@ class UserManager(BaseManager[User]):
 class OtpManager(BaseManager[Otp]):
     async def get_by_user_id(self, db: AsyncSession, user_id: UUID) -> Optional[Otp]:
         otp = (
-            await db.execute(
-                select(self.model)
-                .where(self.model.user_id == user_id)
-                .options(joinedload(self.model.user))
-            )
+            await db.execute(select(self.model).where(self.model.user_id == user_id))
         ).scalar_one_or_none()
         return otp
 
@@ -54,11 +49,7 @@ class OtpManager(BaseManager[Otp]):
 class JwtManager(BaseManager[Jwt]):
     async def get_by_user_id(self, db: AsyncSession, user_id: str) -> Optional[Jwt]:
         jwt = (
-            await db.execute(
-                select(self.model)
-                .where(self.model.user_id == user_id)
-                .options(joinedload(self.model.user))
-            )
+            await db.execute(select(self.model).where(self.model.user_id == user_id))
         ).scalar_one_or_none()
         return jwt
 

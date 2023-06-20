@@ -6,7 +6,7 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, Mapped, backref
+from sqlalchemy.orm import relationship, Mapped
 
 from .base import BaseModel, File
 from datetime import datetime
@@ -35,22 +35,6 @@ class User(BaseModel):
     )
     avatar: Mapped[File] = relationship("File", lazy="joined")
 
-    # jwt: Mapped["Jwt"] = relationship(
-    #     "Jwt",
-    #     foreign_keys="Jwt.user_id",
-    #     back_populates="user",
-    #     lazy="selectin",
-    #     uselist=False,
-    # )
-
-    # otp: Mapped["Otp"] = relationship(
-    #     "Otp",
-    #     foreign_keys="Otp.user_id",
-    #     back_populates="user",
-    #     lazy="selectin",
-    #     uselist=False,
-    # )
-
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -66,7 +50,7 @@ class Jwt(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
     )
-    user: Mapped[User] = relationship("User", backref="jwt", lazy="joined")
+    user: Mapped[User] = relationship("User", lazy="joined")
     access: Mapped[str] = Column(String())
     refresh: Mapped[str] = Column(String())
 
@@ -81,7 +65,7 @@ class Otp(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
     )
-    user: Mapped[User] = relationship("User", backref="otp", lazy="joined")
+    user: Mapped[User] = relationship("User", lazy="joined")
     code: Mapped[int] = Column(Integer())
 
     def __repr__(self):

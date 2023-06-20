@@ -63,7 +63,7 @@ class Listing(BaseModel):
 
     image_id: Mapped[GUUID] = Column(
         UUID(as_uuid=True),
-        ForeignKey("files.id", ondelete="CASCADE"),
+        ForeignKey("files.id", ondelete="SET NULL"),
         unique=True,
     )
     image: Mapped[File] = relationship("File", lazy="joined")

@@ -87,8 +87,8 @@ class UpdateListingSchema(BaseModel):
 
 class CreateListingResponseDataSchema(BaseModel):
     name: str
-    auctioneer: Optional[dict] = Field(
-        None, example={"name": "John Doe", "avatar": "https://image.url"}
+    auctioneer: dict = Field(
+        ..., example={"name": "John Doe", "avatar": "https://image.url"}
     )
 
     slug: str
@@ -100,19 +100,19 @@ class CreateListingResponseDataSchema(BaseModel):
     closing_date: Any
     active: bool
     bids_count: int
-    image: UUID = Field(..., example="Ignore this")
+    image_id: UUID = Field(..., example="Ignore this")
     file_upload_data: Optional[dict]
 
-    @validator("file_upload_data", pre=True)
+    @validator("file_upload_data", always=True)
     def assemble_file_upload_data(cls, v, values):
-        image = values.get("image")
-        if image:
-            values.pop("image", None)
+        image_id = values.get("image_id")
+        if image_id:
+            values.pop("image_id", None)
             return FileProcessor.generate_file_signature(
-                key=image.id,
+                key=image_id,
                 folder="listings",
             )
-        values.pop("image", None)
+        values.pop("image_id", None)
         return None
 
     @validator("auctioneer", pre=True)
@@ -124,7 +124,7 @@ class CreateListingResponseDataSchema(BaseModel):
                 folder="avatars",
                 content_type=v.avatar.resource_type,
             )
-        return {"name": v.full_name(), "avatar": avatar}
+        return {"name": v.full_name, "avatar": avatar}
 
     @validator("category", pre=True)
     def show_category(cls, v):

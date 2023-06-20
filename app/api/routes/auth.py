@@ -245,7 +245,7 @@ class LogoutView(Controller):
         description="This endpoint logs a user out from our application",
     )
     async def logout(self, user: User, db: AsyncSession) -> ResponseSchema:
-        await jwt_manager.delete(db, user.jwt)
+        await jwt_manager.delete_by_user_id(db, user.id)
         return ResponseSchema(message="Logout successful")
 
 

@@ -1,5 +1,5 @@
 from typing import Optional, List, Any
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.managers.base import BaseManager
@@ -55,12 +55,6 @@ class ListingManager(BaseManager[Listing]):
     async def get_by_auctioneer_id(
         self, db: AsyncSession, auctioneer_id: UUID
     ) -> Optional[Listing]:
-        listings = (
-            db.query(self.model)
-            .filter_by(auctioneer_id=auctioneer_id)
-            .order_by(self.model.created_at.desc())
-            .all()
-        )
         return (
             (
                 await db.execute(
@@ -131,9 +125,7 @@ class ListingManager(BaseManager[Listing]):
 
         return await super().create(db, obj_in)
 
-    async def update(
-        self, db: AsyncSession, db_obj: Listing, obj_in
-    ) -> Optional[Listing]:
+    async def update(self, db: AsyncSession, db_obj: Listing, obj_in) -> Listing:
         name = obj_in.get("name")
         if name and name != db_obj.name:
             # Generate unique slug

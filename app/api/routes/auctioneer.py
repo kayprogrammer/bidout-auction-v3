@@ -1,11 +1,9 @@
-from typing import Any, Optional
+from typing import Optional
 from starlite import Controller, get, post, put, patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.listings import (
-    ListingDataSchema,
     ListingsResponseSchema,
-    BidDataSchema,
     BidsResponseDataSchema,
     BidsResponseSchema,
 )
@@ -14,11 +12,8 @@ from app.api.schemas.auctioneer import (
     CreateListingSchema,
     UpdateListingSchema,
     CreateListingResponseSchema,
-    CreateListingResponseDataSchema,
     UpdateProfileSchema,
-    UpdateProfileResponseDataSchema,
     UpdateProfileResponseSchema,
-    ProfileDataSchema,
     ProfileResponseSchema,
 )
 from app.common.exception_handlers import RequestError
@@ -40,15 +35,14 @@ class ProfileView(Controller):
         description="This endpoint gets the current user's profile.",
     )
     async def retrieve_profile(self, user: User) -> ProfileResponseSchema:
-        data = ProfileDataSchema.from_orm(user)
-        return ProfileResponseSchema(message="User details fetched!", data=data)
+        return ProfileResponseSchema(message="User details fetched!", data=user)
 
     @put(
         summary="Update Profile",
         description="This endpoint updates an authenticated user's profile. Note: use the returned upload_url to upload avatar to cloudinary",
     )
     async def update_profile(
-        self, data: UpdateProfileSchema, user: User, db: AsyncSession
+        self, data: UpdateProfileSchema, user: "User", db: AsyncSession
     ) -> UpdateProfileResponseSchema:
         file_type = data.file_type
         data = data.dict()
@@ -57,10 +51,8 @@ class ProfileView(Controller):
             file = await file_manager.create(db, {"resource_type": file_type})
             data.update({"avatar_id": file.id})
         data.pop("file_type", None)
-
         user = await user_manager.update(db, user, data)
-        data = UpdateProfileResponseDataSchema.from_orm(user)
-        return UpdateProfileResponseSchema(message="User updated!", data=data)
+        return UpdateProfileResponseSchema(message="User updated!", data=user)
 
 
 class AuctioneerListingsView(Controller):
@@ -78,8 +70,9 @@ class AuctioneerListingsView(Controller):
         if quantity:
             # Retrieve based on amount
             listings = listings[:quantity]
-        data = [ListingDataSchema.from_orm(listing) for listing in listings]
-        return ListingsResponseSchema(message="Auctioneer Listings fetched", data=data)
+        return ListingsResponseSchema(
+            message="Auctioneer Listings fetched", data=listings
+        )
 
     @post(
         summary="Create a listing",
@@ -94,7 +87,7 @@ class AuctioneerListingsView(Controller):
             category = await category_manager.get_by_slug(db, category)
             if not category:
                 # Return a data validation error
-                return RequestError(
+                raise RequestError(
                     err_msg="Invalid entry",
                     data={"category": "Invalid category"},
                     status_code=422,
@@ -117,9 +110,8 @@ class AuctioneerListingsView(Controller):
         data.pop("file_type")
 
         listing = await listing_manager.create(db, data)
-        data = CreateListingResponseDataSchema.from_orm(listing)
         return CreateListingResponseSchema(
-            message="Listing created successfully", data=data
+            message="Listing created successfully", data=listing
         )
 
     @patch(
@@ -134,10 +126,10 @@ class AuctioneerListingsView(Controller):
 
         listing = await listing_manager.get_by_slug(db, slug)
         if not listing:
-            return RequestError(err_msg="Listing does not exist!", status_code=404)
+            raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
         if user.id != listing.auctioneer_id:
-            return RequestError(err_msg="This listing doesn't belong to you!")
+            raise RequestError(err_msg="This listing doesn't belong to you!")
 
         # Remove keys with values of None
         data = data.dict()
@@ -148,7 +140,7 @@ class AuctioneerListingsView(Controller):
                 category = await category_manager.get_by_slug(db, category)
                 if not category:
                     # Return a data validation error
-                    return RequestError(
+                    raise RequestError(
                         err_msg="Invalid entry",
                         data={"category": "Invalid category"},
                         status_code=422,
@@ -166,11 +158,9 @@ class AuctioneerListingsView(Controller):
             file = await file_manager.create(db, {"resource_type": file_type})
             data.update({"image_id": file.id})
         data.pop("file_type", None)
-
         listing = await listing_manager.update(db, listing, data)
-        data = CreateListingResponseDataSchema.from_orm(listing)
         return CreateListingResponseSchema(
-            message="Listing updated successfully", data=data
+            message="Listing updated successfully", data=listing
         )
 
     @get(
@@ -184,16 +174,16 @@ class AuctioneerListingsView(Controller):
         # Get listing by slug
         listing = await listing_manager.get_by_slug(db, slug)
         if not listing:
-            return RequestError(err_msg="Listing does not exist!", status_code=404)
+            raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
         # Ensure the current user is the listing's owner
         if user.id != listing.auctioneer_id:
-            return RequestError(err_msg="This listing doesn't belong to you!")
+            raise RequestError(err_msg="This listing doesn't belong to you!")
 
         bids = await bid_manager.get_by_listing_id(db, listing.id)
         data = BidsResponseDataSchema(
             listing=listing.name,
-            bids=[BidDataSchema.from_orm(bid) for bid in bids],
+            bids=bids,
         )
         return BidsResponseSchema(message="Listing Bids fetched", data=data)
 

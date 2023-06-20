@@ -7,10 +7,8 @@ from app.api.schemas.listings import (
     ListingsResponseSchema,
     ListingDetailDataSchema,
     ListingResponseSchema,
-    CategoryDataSchema,
     CategoriesResponseSchema,
     CreateBidSchema,
-    BidDataSchema,
     BidsResponseDataSchema,
     BidsResponseSchema,
     BidResponseSchema,
@@ -74,10 +72,7 @@ class ListingsView(Controller):
         )[:3]
         data = ListingDetailDataSchema(
             listing=ListingDataSchema.from_orm(listing),
-            related_listings=[
-                ListingDataSchema.from_orm(related_listing)
-                for related_listing in related_listings
-            ],
+            related_listings=related_listings,
         )
         return ListingResponseSchema(message="Listing details fetched", data=data)
 
@@ -149,8 +144,7 @@ class CategoryListingsView(Controller):
     )
     async def retrieve_categories(self, db: AsyncSession) -> CategoriesResponseSchema:
         categories = await category_manager.get_all(db)
-        data = [CategoryDataSchema.from_orm(category) for category in categories]
-        return CategoriesResponseSchema(message="Categories fetched", data=data)
+        return CategoriesResponseSchema(message="Categories fetched", data=categories)
 
     @get(
         "/{slug:str}",
@@ -201,7 +195,7 @@ class BidsView(Controller):
 
         data = BidsResponseDataSchema(
             listing=listing.name,
-            bids=[BidDataSchema.from_orm(bid) for bid in bids],
+            bids=bids,
         )
         return BidsResponseSchema(message="Listing Bids fetched", data=data)
 
@@ -250,8 +244,7 @@ class BidsView(Controller):
         await listing_manager.update(
             db, listing, {"highest_bid": amount, "bids_count": bids_count}
         )
-        data = BidDataSchema.from_orm(bid)
-        return BidResponseSchema(message="Bid added to listing", data=data)
+        return BidResponseSchema(message="Bid added to listing", data=bid)
 
 
 listings_handlers = [
