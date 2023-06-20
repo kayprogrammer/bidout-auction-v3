@@ -19,7 +19,7 @@ class ListingDataSchema(BaseModel):
     name: str
 
     auctioneer: dict = Field(
-        None, example={"name": "John Doe", "avatar": "https://image.url"}
+        ..., example={"name": "John Doe", "avatar": "https://image.url"}
     )
 
     slug: Optional[str]

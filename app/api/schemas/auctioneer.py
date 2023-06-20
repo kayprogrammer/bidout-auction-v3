@@ -96,7 +96,7 @@ class CreateListingResponseDataSchema(BaseModel):
 
     category: Optional[str]
 
-    price: int
+    price: Decimal = Field(..., example=1000.00, decimal_places=2)
     closing_date: Any
     active: bool
     bids_count: int

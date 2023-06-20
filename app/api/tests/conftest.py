@@ -55,6 +55,7 @@ def app(mocker, db_config):
     mocker.patch(
         "app.core.database.sqlalchemy_plugin", new=SQLAlchemyPlugin(config=db_config)
     )
+    mocker.patch("app.main.csrf_config", new="")
     from app.main import app
 
     return app
@@ -78,6 +79,7 @@ async def client(app):
         client.headers = {
             **client.headers,
             "cookie": f"session={secrets.token_hex(32)}",
+            "X-CSRF-Token": "whatever",
         }
         yield client
 

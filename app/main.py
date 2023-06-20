@@ -1,8 +1,5 @@
-from starlite import (
-    Starlite,
-    OpenAPIConfig,
-    OpenAPIController,
-)
+from starlite import Starlite, OpenAPIConfig, OpenAPIController, CORSConfig, CSRFConfig
+from starlite.middleware import RateLimitConfig
 from pydantic_openapi_schema.v3_1_0 import Components, SecurityScheme
 
 from app.core.config import settings
@@ -32,10 +29,16 @@ openapi_config = OpenAPIConfig(
     root_schema_site="swagger",
 )
 
+rate_limit_config = RateLimitConfig(rate_limit=("minute", 1000))
+cors_config = CORSConfig(allow_origins=settings.CORS_ALLOWED_ORIGINS)
+csrf_config = CSRFConfig(secret=settings.SECRET_KEY)
+
 app = Starlite(
     route_handlers=all_routers,
     openapi_config=openapi_config,
-    middleware=[session_config.middleware],
+    middleware=[session_config.middleware, rate_limit_config.middleware],
     plugins=[sqlalchemy_plugin],
     exception_handlers=exc_handlers,
+    cors_config=cors_config,
+    # csrf_config=csrf_config,
 )

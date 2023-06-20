@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Union
 
 from pydantic import AnyUrl, BaseSettings, EmailStr, validator
 
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # PROJECT DETAILS
     PROJECT_NAME: str
     FRONTEND_URL: str
-    CORS_ALLOWED_ORIGINS: Any
+    CORS_ALLOWED_ORIGINS: Union[List, str]
 
     # POSTGRESQL
     POSTGRES_USER: str
