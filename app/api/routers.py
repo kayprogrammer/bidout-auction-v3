@@ -7,7 +7,10 @@ from app.api.routes.healthcheck import healthcheck
 from app.api.dependencies import get_client_id, get_current_user
 
 general_router = Router(
-    path="/api/v3/general", route_handlers=general_handlers, tags=["General"]
+    path="/api/v3/general",
+    route_handlers=general_handlers,
+    tags=["General"],
+    # parameters={"location": "cookie", "name": "csrftoken", "schema": str}
 )
 
 auth_router = Router(

@@ -1,4 +1,4 @@
-from starlite import Controller, get, post
+from starlite import Controller, Request, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.schemas.general import (
     SubscriberSchema,
@@ -21,7 +21,10 @@ class SiteDetailView(Controller):
         summary="Retrieve site details",
         description="This endpoint retrieves few details of the site/application",
     )
-    async def retrieve_site_details(self, db: AsyncSession) -> SiteDetailResponseSchema:
+    async def retrieve_site_details(
+        self, request: Request, db: AsyncSession
+    ) -> SiteDetailResponseSchema:
+        print(request.cookies)
         sitedetail = await sitedetail_manager.get(db)
         return SiteDetailResponseSchema(message="Site Details fetched", data=sitedetail)
 
@@ -55,8 +58,7 @@ class ReviewsView(Controller):
     )
     async def reviews(self, db: AsyncSession) -> ReviewsResponseSchema:
         reviews = await review_manager.get_active(db)
-        data = [review for review in reviews]
-        return ReviewsResponseSchema(message="Reviews fetched", data=data)
+        return ReviewsResponseSchema(message="Reviews fetched", data=reviews)
 
 
 general_handlers = [SiteDetailView, SubscriberCreateView, ReviewsView]

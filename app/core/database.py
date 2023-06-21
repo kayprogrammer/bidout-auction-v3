@@ -18,4 +18,6 @@ sqlalchemy_plugin = SQLAlchemyPlugin(config=sqlalchemy_config)
 
 SessionModel = create_session_model(Base)
 
-session_config = SQLAlchemyBackendConfig(plugin=sqlalchemy_plugin, model=SessionModel)
+session_config = SQLAlchemyBackendConfig(
+    plugin=sqlalchemy_plugin, model=SessionModel, samesite="none", secure=True
+)
