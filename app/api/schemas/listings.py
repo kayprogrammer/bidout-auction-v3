@@ -17,7 +17,7 @@ class AddOrRemoveWatchlistSchema(BaseModel):
 
 
 class AddOrRemoveWatchlistResponseDataSchema(BaseModel):
-    guestuser_id: UUID
+    guestuser_id: Optional[UUID]
 
 
 class AddOrRemoveWatchlistResponseSchema(ResponseSchema):
