@@ -1,4 +1,5 @@
 from typing import Optional, List, Any
+from uuid import UUID
 
 from pydantic import BaseModel, validator, Field
 from datetime import datetime
@@ -14,6 +15,8 @@ from decimal import Decimal
 class AddOrRemoveWatchlistSchema(BaseModel):
     slug: str = Field(..., example="listing_slug")
 
+class AddOrRemoveWatchlistResponseSchema(ResponseSchema):
+    guestuser_id: Optional[UUID]
 
 class ListingDataSchema(BaseModel):
     name: str

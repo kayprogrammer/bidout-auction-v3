@@ -1,5 +1,5 @@
 from typing import Optional, List, Any
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.managers.base import BaseManager
@@ -167,7 +167,7 @@ class WatchListManager(BaseManager[WatchList]):
             (
                 await db.execute(
                     select(self.model.listing_id)
-                    .where(self.model.session_key == str(session_key))
+                    .where(self.model.session_key == session_key)
                     .where(~self.model.listing_id.in_(subquery))
                     .order_by(self.model.created_at.desc())
                 )
@@ -178,17 +178,15 @@ class WatchListManager(BaseManager[WatchList]):
         return watchlist
 
     async def get_by_client_id(
-        self, db: AsyncSession, id: str
+        self, db: AsyncSession, client_id: Optional[UUID]
     ) -> Optional[List[WatchList]]:
-        filter_clause = self.model.user_id == id
-        if not is_valid_uuid(id):
-            filter_clause = self.model.session_key == id
-
+        if not client_id:
+            return []
         watchlist = (
             (
                 await db.execute(
                     select(self.model)
-                    .where(filter_clause)
+                    .where(or_(self.model.user_id == client_id, self.model.session_key == client_id))
                     .order_by(self.model.created_at.desc())
                 )
             )
@@ -198,16 +196,15 @@ class WatchListManager(BaseManager[WatchList]):
         return watchlist
 
     async def get_by_client_id_and_listing_id(
-        self, db: AsyncSession, id: str, listing_id: UUID
+        self, db: AsyncSession, client_id: Optional[UUID], listing_id: UUID
     ) -> Optional[List[WatchList]]:
-        filter_clause = self.model.user_id == id
-        if not is_valid_uuid(id):
-            filter_clause = self.model.session_key == id
+        if not client_id:
+            return None
 
         watchlist = (
             await db.execute(
                 select(self.model)
-                .where(filter_clause)
+                .where(or_(self.model.user_id == client_id, self.model.session_key == client_id))
                 .where(self.model.listing_id == listing_id)
             )
         ).scalar_one_or_none()

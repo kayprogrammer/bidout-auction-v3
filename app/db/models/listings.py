@@ -119,7 +119,7 @@ class WatchList(BaseModel):
     )
     listing: Mapped[Listing] = relationship("Listing", lazy="joined")
 
-    session_key: Mapped[str] = Column(String)
+    session_key: Mapped[GUUID] = Column(UUID(as_uuid=True))
 
     def __repr__(self):
         if self.user:

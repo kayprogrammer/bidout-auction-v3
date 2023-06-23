@@ -4,7 +4,7 @@ from logging.config import fileConfig
 from sqlalchemy.engine import Connection
 
 from alembic import context
-from app.core.database import Base, sqlalchemy_config, SessionModel
+from app.core.database import Base, sqlalchemy_config
 from app.db.models.general import *
 from app.db.models.accounts import *
 from app.db.models.listings import *

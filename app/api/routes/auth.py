@@ -1,3 +1,5 @@
+from typing import Optional
+from uuid import UUID
 from starlite import Controller, Request, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -171,7 +173,7 @@ class LoginView(Controller):
         description="This endpoint generates new access and refresh tokens for authentication",
     )
     async def login(
-        self, request: Request, data: LoginUserSchema, client_id: str, db: AsyncSession
+        self, request: Request, data: LoginUserSchema, client_id: Optional[UUID], db: AsyncSession
     ) -> TokensResponseSchema:
         email = data.email
         plain_password = data.password
@@ -221,7 +223,7 @@ class RefreshTokensView(Controller):
         jwt = await jwt_manager.get_by_refresh(db, token)
         if not jwt:
             raise RequestError(err_msg="Refresh token does not exist", status_code=404)
-        if not await Authentication.verify_refresh_token(token):
+        if not await Authentication.decode_jwt(token):
             raise RequestError(
                 err_msg="Refresh token is invalid or expired", status_code=401
             )

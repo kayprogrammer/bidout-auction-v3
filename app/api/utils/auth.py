@@ -36,22 +36,28 @@ class Authentication:
             algorithm=ALGORITHM,
         )
 
-    # verify refresh token
-    async def verify_refresh_token(token: str):
-        try:
-            await jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-            return True
-        except:
-            return False
-
+    # generate guest user token based and encode guest user's id
+    async def create_guestuser_token(payload: dict):
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.GUESTUSER_TOKEN_EXPIRE_MINUTES
+        )
+        to_encode = {"exp": expire, **payload}
+        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+    
     # deocde access token from header
-    async def decodeAuthorization(db: AsyncSession, token: str):
+    async def decode_jwt(token: str):
         try:
-            decoded = jwt.decode(token[7:], settings.SECRET_KEY, algorithms=[ALGORITHM])
-            jwt_obj = await jwt_manager.get_by_user_id(db, decoded["user_id"])
-            if not jwt_obj:
-                return None
-            return jwt_obj.user
-        except Exception as e:
-            print(e)
+            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        except:
+            decoded = False
+        return decoded
+    
+    async def decodeAuthorization(db: AsyncSession, token: str):
+        decoded = await Authentication.decode_jwt(token[7:])
+        if not decoded:
             return None
+        jwt_obj = await jwt_manager.get_by_user_id(db, decoded["user_id"])
+        if not jwt_obj:
+            return None
+        return jwt_obj.user

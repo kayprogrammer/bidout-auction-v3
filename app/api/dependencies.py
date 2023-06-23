@@ -1,3 +1,5 @@
+from typing import Optional
+from uuid import UUID
 from starlite import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.utils.auth import Authentication
@@ -21,10 +23,11 @@ async def get_current_user(request: Request, db: AsyncSession) -> User:
     return user
 
 
-async def get_client_id(request: Request, db: AsyncSession) -> str:
+async def get_client_id(request: Request, db: AsyncSession) -> Optional[UUID]:
     token = request.headers.get("authorization")
     if token:
         user = await get_current_user(request, db)
-        return str(user.id)
-    session_key = request.cookies.get("session")
-    return session_key
+        return user.id
+    guest_jwt_token = request.headers.get("guestusertoken")
+    decoded = await Authentication.decode_jwt(guest_jwt_token)
+    return decoded["guestuser_id"] if decoded else None

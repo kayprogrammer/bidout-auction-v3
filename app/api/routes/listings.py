@@ -1,3 +1,4 @@
+from uuid import UUID
 from starlite import Controller, Response, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,9 +13,11 @@ from app.api.schemas.listings import (
     BidsResponseDataSchema,
     BidsResponseSchema,
     BidResponseSchema,
-    ResponseSchema,
+    AddOrRemoveWatchlistResponseSchema,
 )
+from app.api.utils.auth import Authentication
 from app.api.utils.validators import is_valid_uuid
+from app.db.managers.base import guestuser_manager
 from app.db.managers.listings import (
     listing_manager,
     bid_manager,
@@ -34,7 +37,7 @@ class ListingsView(Controller):
         description="This endpoint retrieves all listings",
     )
     async def retrieve_listings(
-        self, db: AsyncSession, client_id: str, quantity: Optional[int]
+        self, db: AsyncSession, client_id: Optional[UUID], quantity: Optional[int]
     ) -> ListingsResponseSchema:
         listings = await listing_manager.get_all(db)
         if quantity:
@@ -85,7 +88,7 @@ class ListingsByWatchListView(Controller):
         description="This endpoint retrieves all listings",
     )
     async def retrieve_watchlist(
-        self, db: AsyncSession, client_id: str
+        self, db: AsyncSession, client_id: Optional[UUID]
     ) -> ListingsResponseSchema:
         watchlists = await watchlist_manager.get_by_client_id(db, client_id)
         data = [
@@ -106,8 +109,12 @@ class ListingsByWatchListView(Controller):
         self,
         data: AddOrRemoveWatchlistSchema,
         db: AsyncSession,
-        client_id: str,
-    ) -> ResponseSchema:
+        client_id: Optional[UUID],
+    ) -> AddOrRemoveWatchlistResponseSchema:
+        guestuser_id = None
+        if not client_id:
+            guestuser_id = (await guestuser_manager.create(db, {})).id
+
         listing = await listing_manager.get_by_slug(db, data.slug)
         if not listing:
             raise RequestError(err_msg="Listing does not exist!", status_code=404)
@@ -132,7 +139,7 @@ class ListingsByWatchListView(Controller):
         else:
             await watchlist_manager.delete(db, watchlist)
 
-        return Response(ResponseSchema(message=resp_message), status_code=status_code)
+        return Response(AddOrRemoveWatchlistResponseSchema(message=resp_message, guestuser_id=guestuser_id), status_code=status_code)
 
 
 class CategoryListingsView(Controller):
@@ -152,7 +159,7 @@ class CategoryListingsView(Controller):
         description="This endpoint retrieves all listings in a particular category. Use slug 'other' for category other",
     )
     async def retrieve_category_listings(
-        self, slug: str, db: AsyncSession, client_id: str
+        self, slug: str, db: AsyncSession, client_id: Optional[UUID]
     ) -> ListingsResponseSchema:
         # listings with category 'other' have category column as null
         category = None

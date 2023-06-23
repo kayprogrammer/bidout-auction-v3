@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
-from app.db.models.base import File
+from app.db.models.base import File, GuestUser
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -93,5 +93,8 @@ class BaseManager(Generic[ModelType]):
 class FileManager(BaseManager[File]):
     pass
 
+class GuestUserManager(BaseManager[File]):
+    pass
 
 file_manager = FileManager(File)
+guestuser_manager = GuestUserManager(GuestUser)
