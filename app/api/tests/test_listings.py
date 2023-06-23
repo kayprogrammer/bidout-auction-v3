@@ -95,6 +95,7 @@ async def test_create_or_remove_user_watchlists_listng(
     assert response.json() == {
         "status": "success",
         "message": "Listing added to user watchlist",
+        "guestuser_id": None,
     }
 
 

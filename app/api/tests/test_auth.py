@@ -175,9 +175,7 @@ async def test_refresh_token(mocker, client, database, verified_user):
     # Test for valid refresh token
     refresh = await Authentication.create_refresh_token()
     jwt_obj = await jwt_manager.update(database, jwt_obj, {"refresh": refresh})
-    mocker.patch(
-        "app.api.utils.auth.Authentication.verify_refresh_token", return_value=True
-    )
+    mocker.patch("app.api.utils.auth.Authentication.decode_jwt", return_value=True)
     response = await client.post(
         f"{BASE_URL_PATH}/refresh", json={"refresh": jwt_obj.refresh}
     )

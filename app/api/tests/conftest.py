@@ -10,7 +10,7 @@ from app.db.managers.listings import category_manager, listing_manager
 from app.db.managers.base import file_manager
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
-import pytest, asyncio, secrets
+import pytest, asyncio
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
 
@@ -55,7 +55,6 @@ def app(mocker, db_config):
     mocker.patch(
         "app.core.database.sqlalchemy_plugin", new=SQLAlchemyPlugin(config=db_config)
     )
-    mocker.patch("app.main.csrf_config", new="")
     from app.main import app
 
     return app
@@ -76,11 +75,6 @@ async def database(db_config):
 @pytest.fixture
 async def client(app):
     async with AsyncTestClient(app=app) as client:
-        client.headers = {
-            **client.headers,
-            "cookie": f"session={secrets.token_hex(32)}",
-            "X-CSRF-Token": "whatever",
-        }
         yield client
 
 

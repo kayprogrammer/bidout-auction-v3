@@ -29,7 +29,10 @@ openapi_config = OpenAPIConfig(
                 scheme="bearer",
             ),
             "GuestUserID": SecurityScheme(
-                type="apiKey", security_scheme_in="header", name="guestUserID"
+                type="apiKey",
+                security_scheme_in="header",
+                name="guestUserID",
+                description="For guest watchlists. Get ID from '/api/v3/listings/watchlist' POST endpoint",
             ),
         },
     ),

@@ -109,7 +109,10 @@ class ListingsByWatchListView(Controller):
 
     @post(
         summary="Add or Remove listing from a users watchlist",
-        description="This endpoint adds or removes a listing from a user's watchlist, authenticated or not.",
+        description="""
+        This endpoint adds or removes a listing from a user's watchlist, authenticated or not.... 
+        As a guest, ensure to store guestuser_id in localstorage and keep passing it to header 'guestuserid' in subsequent requests
+        """,
     )
     async def add_or_remove_watchlist_listings(
         self,
