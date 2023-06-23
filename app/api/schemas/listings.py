@@ -16,8 +16,12 @@ class AddOrRemoveWatchlistSchema(BaseModel):
     slug: str = Field(..., example="listing_slug")
 
 
+class AddOrRemoveWatchlistResponseDataSchema(BaseModel):
+    guestuser_id: UUID
+
+
 class AddOrRemoveWatchlistResponseSchema(ResponseSchema):
-    guestuser_id: Optional[UUID]
+    data: Optional[AddOrRemoveWatchlistResponseDataSchema]
 
 
 class ListingDataSchema(BaseModel):

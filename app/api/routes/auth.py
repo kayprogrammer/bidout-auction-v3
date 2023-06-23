@@ -1,6 +1,5 @@
 from typing import Optional, Union
-from uuid import UUID
-from starlite import Controller, Request, get, post
+from starlite import Controller, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.auth import (
@@ -15,6 +14,7 @@ from app.api.schemas.auth import (
 )
 from app.common.exception_handlers import RequestError
 from app.api.schemas.base import ResponseSchema
+from app.db.managers.base import guestuser_manager
 
 from app.db.models.accounts import User
 from app.db.managers.accounts import user_manager, otp_manager, jwt_manager
@@ -175,7 +175,6 @@ class LoginView(Controller):
     )
     async def login(
         self,
-        request: Request,
         data: LoginUserSchema,
         client: Optional[Union["User", "GuestUser"]],
         db: AsyncSession,
@@ -208,7 +207,10 @@ class LoginView(Controller):
             ]
             await watchlist_manager.bulk_create(db, data_to_create)
 
-        request.clear_session()
+        if isinstance(client, GuestUser):
+            # Delete client (Almost like clearing sessions)
+            await guestuser_manager.delete(db, client)
+
         return TokensResponseSchema(
             message="Login successful", data={"access": access, "refresh": refresh}
         )

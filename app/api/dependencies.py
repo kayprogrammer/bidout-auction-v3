@@ -1,5 +1,4 @@
 from typing import Optional, Union
-from uuid import UUID
 from starlite import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.utils.auth import Authentication

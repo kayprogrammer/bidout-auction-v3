@@ -41,7 +41,6 @@ class ListingsView(Controller):
         client: Optional[Union["User", "GuestUser"]],
         quantity: Optional[int],
     ) -> ListingsResponseSchema:
-        print("hh")
 
         listings = await listing_manager.get_all(db)
         if quantity:
@@ -150,7 +149,7 @@ class ListingsByWatchListView(Controller):
         guestuser_id = client.id if isinstance(client, GuestUser) else None
         return Response(
             AddOrRemoveWatchlistResponseSchema(
-                message=resp_message, guestuser_id=guestuser_id
+                message=resp_message, data={"guestuser_id": guestuser_id}
             ),
             status_code=status_code,
         )
