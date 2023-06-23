@@ -1,6 +1,4 @@
-import asyncio
-import os
-import sys
+import asyncio, os, sys
 
 sys.path.append(os.path.abspath("./"))  # To single-handedly execute this script
 

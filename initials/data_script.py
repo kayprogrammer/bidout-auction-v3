@@ -10,8 +10,7 @@ from pathlib import Path
 from .mappings import listing_mappings, category_mappings, file_mappings
 from datetime import datetime, timedelta
 from slugify import slugify
-import os
-import random
+import os, random
 
 CURRENT_DIR = Path(__file__).resolve().parent
 test_images_directory = os.path.join(CURRENT_DIR, "images")
