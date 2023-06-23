@@ -36,15 +36,6 @@ class Authentication:
             algorithm=ALGORITHM,
         )
 
-    # generate guest user token based and encode guest user's id
-    async def create_guestuser_token(payload: dict):
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.GUESTUSER_TOKEN_EXPIRE_MINUTES
-        )
-        to_encode = {"exp": expire, **payload}
-        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
-
     # deocde access token from header
     async def decode_jwt(token: str):
         try:
