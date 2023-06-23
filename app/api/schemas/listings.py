@@ -15,8 +15,10 @@ from decimal import Decimal
 class AddOrRemoveWatchlistSchema(BaseModel):
     slug: str = Field(..., example="listing_slug")
 
+
 class AddOrRemoveWatchlistResponseSchema(ResponseSchema):
     guestuser_id: Optional[UUID]
+
 
 class ListingDataSchema(BaseModel):
     name: str

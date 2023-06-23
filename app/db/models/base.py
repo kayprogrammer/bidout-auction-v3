@@ -26,6 +26,6 @@ class File(BaseModel):
 
     resource_type: Mapped[str] = Column(String)
 
+
 class GuestUser(BaseModel):
     __tablename__ = "guestusers"
-    

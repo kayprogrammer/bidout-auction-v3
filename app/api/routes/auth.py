@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 from starlite import Controller, Request, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +23,7 @@ from app.db.managers.listings import watchlist_manager
 from app.api.utils.emails import send_email
 from app.core.security import verify_password
 from app.api.utils.auth import Authentication
+from app.db.models.base import GuestUser
 
 
 class RegisterView(Controller):
@@ -173,7 +174,11 @@ class LoginView(Controller):
         description="This endpoint generates new access and refresh tokens for authentication",
     )
     async def login(
-        self, request: Request, data: LoginUserSchema, client_id: Optional[UUID], db: AsyncSession
+        self,
+        request: Request,
+        data: LoginUserSchema,
+        client: Optional[Union["User", "GuestUser"]],
+        db: AsyncSession,
     ) -> TokensResponseSchema:
         email = data.email
         plain_password = data.password
@@ -194,7 +199,7 @@ class LoginView(Controller):
 
         # Move all guest user watchlists to the authenticated user watchlists
         guest_user_watchlists = await watchlist_manager.get_by_session_key(
-            db, client_id, user.id
+            db, client.id if client else None, user.id
         )
         if len(guest_user_watchlists) > 0:
             data_to_create = [

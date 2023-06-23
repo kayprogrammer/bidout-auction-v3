@@ -1,8 +1,8 @@
 """Initial Migrations
 
-Revision ID: 962d74fec71f
+Revision ID: 7c6cdc660478
 Revises: 
-Create Date: 2023-06-16 14:11:04.154138
+Create Date: 2023-06-23 02:53:58.514278
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "962d74fec71f"
+revision = "7c6cdc660478"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,6 +34,15 @@ def upgrade() -> None:
     op.create_table(
         "files",
         sa.Column("resource_type", sa.String(), nullable=True),
+        sa.Column("pkid", sa.Integer(), nullable=False),
+        sa.Column("id", sa.UUID(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        sa.PrimaryKeyConstraint("pkid"),
+        sa.UniqueConstraint("id"),
+    )
+    op.create_table(
+        "guestusers",
         sa.Column("pkid", sa.Integer(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
@@ -124,6 +133,8 @@ def upgrade() -> None:
         sa.Column("desc", sa.Text(), nullable=True),
         sa.Column("category_id", sa.UUID(), nullable=True),
         sa.Column("price", sa.Numeric(precision=10, scale=2), nullable=True),
+        sa.Column("highest_bid", sa.Numeric(precision=10, scale=2), nullable=True),
+        sa.Column("bids_count", sa.Integer(), nullable=True),
         sa.Column("closing_date", sa.DateTime(), nullable=True),
         sa.Column("active", sa.Boolean(), nullable=True),
         sa.Column("image_id", sa.UUID(), nullable=True),
@@ -135,7 +146,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["category_id"], ["categories.id"], ondelete="SET NULL"
         ),
-        sa.ForeignKeyConstraint(["image_id"], ["files.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["image_id"], ["files.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("pkid"),
         sa.UniqueConstraint("id"),
         sa.UniqueConstraint("image_id"),
@@ -187,12 +198,13 @@ def upgrade() -> None:
         "watchlists",
         sa.Column("user_id", sa.UUID(), nullable=True),
         sa.Column("listing_id", sa.UUID(), nullable=True),
-        sa.Column("session_key", sa.String(), nullable=True),
+        sa.Column("session_key", sa.UUID(), nullable=True),
         sa.Column("pkid", sa.Integer(), nullable=False),
         sa.Column("id", sa.UUID(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(["listing_id"], ["listings.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["session_key"], ["guestusers.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("pkid"),
         sa.UniqueConstraint("id"),
@@ -219,6 +231,7 @@ def downgrade() -> None:
     op.drop_table("sitedetails")
     op.drop_index(op.f("ix_session_session_id"), table_name="session")
     op.drop_table("session")
+    op.drop_table("guestusers")
     op.drop_table("files")
     op.drop_table("categories")
     # ### end Alembic commands ###

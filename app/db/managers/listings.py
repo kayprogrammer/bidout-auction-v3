@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.managers.base import BaseManager
 from app.db.models.listings import Category, Listing, WatchList, Bid
 from app.api.utils.auth import Authentication
-from app.api.utils.validators import is_valid_uuid
 
 from uuid import UUID
 from slugify import slugify
@@ -186,7 +185,12 @@ class WatchListManager(BaseManager[WatchList]):
             (
                 await db.execute(
                     select(self.model)
-                    .where(or_(self.model.user_id == client_id, self.model.session_key == client_id))
+                    .where(
+                        or_(
+                            self.model.user_id == client_id,
+                            self.model.session_key == client_id,
+                        )
+                    )
                     .order_by(self.model.created_at.desc())
                 )
             )
@@ -204,7 +208,12 @@ class WatchListManager(BaseManager[WatchList]):
         watchlist = (
             await db.execute(
                 select(self.model)
-                .where(or_(self.model.user_id == client_id, self.model.session_key == client_id))
+                .where(
+                    or_(
+                        self.model.user_id == client_id,
+                        self.model.session_key == client_id,
+                    )
+                )
                 .where(self.model.listing_id == listing_id)
             )
         ).scalar_one_or_none()

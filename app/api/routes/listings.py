@@ -1,4 +1,3 @@
-from uuid import UUID
 from starlite import Controller, Response, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,8 +14,6 @@ from app.api.schemas.listings import (
     BidResponseSchema,
     AddOrRemoveWatchlistResponseSchema,
 )
-from app.api.utils.auth import Authentication
-from app.api.utils.validators import is_valid_uuid
 from app.db.managers.base import guestuser_manager
 from app.db.managers.listings import (
     listing_manager,
@@ -26,7 +23,9 @@ from app.db.managers.listings import (
 )
 from app.common.exception_handlers import RequestError
 from app.db.models.accounts import User
-from typing import Optional
+from typing import Optional, Union
+
+from app.db.models.base import GuestUser
 
 
 class ListingsView(Controller):
@@ -37,8 +36,13 @@ class ListingsView(Controller):
         description="This endpoint retrieves all listings",
     )
     async def retrieve_listings(
-        self, db: AsyncSession, client_id: Optional[UUID], quantity: Optional[int]
+        self,
+        db: AsyncSession,
+        client: Optional[Union["User", "GuestUser"]],
+        quantity: Optional[int],
     ) -> ListingsResponseSchema:
+        print("hh")
+
         listings = await listing_manager.get_all(db)
         if quantity:
             # Retrieve based on amount
@@ -48,7 +52,7 @@ class ListingsView(Controller):
             ListingDataSchema(
                 watchlist=True
                 if await watchlist_manager.get_by_client_id_and_listing_id(
-                    db, client_id, listing.id
+                    db, client.id if client else None, listing.id
                 )
                 else False,
                 time_left_seconds=listing.time_left_seconds,
@@ -88,9 +92,11 @@ class ListingsByWatchListView(Controller):
         description="This endpoint retrieves all listings",
     )
     async def retrieve_watchlist(
-        self, db: AsyncSession, client_id: Optional[UUID]
+        self, db: AsyncSession, client: Optional[Union["User", "GuestUser"]]
     ) -> ListingsResponseSchema:
-        watchlists = await watchlist_manager.get_by_client_id(db, client_id)
+        watchlists = await watchlist_manager.get_by_client_id(
+            db, client.id if client else None
+        )
         data = [
             ListingDataSchema(
                 watchlist=True,
@@ -109,24 +115,23 @@ class ListingsByWatchListView(Controller):
         self,
         data: AddOrRemoveWatchlistSchema,
         db: AsyncSession,
-        client_id: Optional[UUID],
+        client: Optional[Union["User", "GuestUser"]],
     ) -> AddOrRemoveWatchlistResponseSchema:
-        guestuser_id = None
-        if not client_id:
-            guestuser_id = (await guestuser_manager.create(db, {})).id
+        if not client:
+            client = await guestuser_manager.create(db, {})
 
         listing = await listing_manager.get_by_slug(db, data.slug)
         if not listing:
             raise RequestError(err_msg="Listing does not exist!", status_code=404)
 
-        data_entry = {"session_key": client_id, "listing_id": listing.id}
-        if is_valid_uuid(client_id):
+        data_entry = {"session_key": client.id, "listing_id": listing.id}
+        if isinstance(client, User):
             # Here we know its a real user and not a session user.
             del data_entry["session_key"]
-            data_entry["user_id"] = client_id
+            data_entry["user_id"] = client.id
 
         watchlist = await watchlist_manager.get_by_client_id_and_listing_id(
-            db, client_id, listing.id
+            db, client.id, listing.id
         )
         # If watchlist exists, then its a removal action
         resp_message = "Listing removed from user watchlist"
@@ -139,7 +144,13 @@ class ListingsByWatchListView(Controller):
         else:
             await watchlist_manager.delete(db, watchlist)
 
-        return Response(AddOrRemoveWatchlistResponseSchema(message=resp_message, guestuser_id=guestuser_id), status_code=status_code)
+        guestuser_id = client.id if isinstance(client, GuestUser) else None
+        return Response(
+            AddOrRemoveWatchlistResponseSchema(
+                message=resp_message, guestuser_id=guestuser_id
+            ),
+            status_code=status_code,
+        )
 
 
 class CategoryListingsView(Controller):
@@ -159,7 +170,7 @@ class CategoryListingsView(Controller):
         description="This endpoint retrieves all listings in a particular category. Use slug 'other' for category other",
     )
     async def retrieve_category_listings(
-        self, slug: str, db: AsyncSession, client_id: Optional[UUID]
+        self, slug: str, db: AsyncSession, client: Optional[Union["User", "GuestUser"]]
     ) -> ListingsResponseSchema:
         # listings with category 'other' have category column as null
         category = None
@@ -173,7 +184,7 @@ class CategoryListingsView(Controller):
             ListingDataSchema(
                 watchlist=True
                 if await watchlist_manager.get_by_client_id_and_listing_id(
-                    db, client_id, listing.id
+                    db, client.id if client else None, listing.id
                 )
                 else False,
                 time_left_seconds=listing.time_left_seconds,

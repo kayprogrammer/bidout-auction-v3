@@ -44,7 +44,7 @@ class Authentication:
         to_encode = {"exp": expire, **payload}
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
-    
+
     # deocde access token from header
     async def decode_jwt(token: str):
         try:
@@ -52,7 +52,7 @@ class Authentication:
         except:
             decoded = False
         return decoded
-    
+
     async def decodeAuthorization(db: AsyncSession, token: str):
         decoded = await Authentication.decode_jwt(token[7:])
         if not decoded:

@@ -4,13 +4,12 @@ from app.api.routes.auth import auth_handlers
 from app.api.routes.listings import listings_handlers
 from app.api.routes.auctioneer import auctioneer_handlers
 from app.api.routes.healthcheck import healthcheck
-from app.api.dependencies import get_client_id, get_current_user
+from app.api.dependencies import get_client, get_current_user
 
 general_router = Router(
     path="/api/v3/general",
     route_handlers=general_handlers,
     tags=["General"],
-    # parameters={"location": "cookie", "name": "csrftoken", "schema": str}
 )
 
 auth_router = Router(
@@ -19,7 +18,7 @@ auth_router = Router(
     tags=["Auth"],
     dependencies={
         "user": Provide(get_current_user),
-        "client_id": Provide(get_client_id),
+        "client": Provide(get_client),
     },
 )
 
@@ -29,7 +28,7 @@ listings_router = Router(
     tags=["Listings"],
     dependencies={
         "user": Provide(get_current_user),
-        "client_id": Provide(get_client_id),
+        "client": Provide(get_client),
     },
 )
 

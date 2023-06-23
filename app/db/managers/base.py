@@ -93,8 +93,10 @@ class BaseManager(Generic[ModelType]):
 class FileManager(BaseManager[File]):
     pass
 
+
 class GuestUserManager(BaseManager[File]):
     pass
+
 
 file_manager = FileManager(File)
 guestuser_manager = GuestUserManager(GuestUser)

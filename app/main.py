@@ -21,18 +21,16 @@ openapi_config = OpenAPIConfig(
     title=settings.PROJECT_NAME,
     version="3.0.0",
     description="A simple bidding API built with Litestar",
-    security=[{"BearerToken": [], "GuestToken": []}],
+    security=[{"BearerToken": [], "GuestUserID": []}],
     components=Components(
         securitySchemes={
             "BearerToken": SecurityScheme(
                 type="http",
                 scheme="bearer",
             ),
-            "GuestUserToken": SecurityScheme(
-                type="apiKey",
-                security_scheme_in="header",
-                name="guestUserToken"
-            )
+            "GuestUserID": SecurityScheme(
+                type="apiKey", security_scheme_in="header", name="guestUserID"
+            ),
         },
     ),
     openapi_controller=MyOpenAPIController,
@@ -52,4 +50,3 @@ app = Starlite(
     exception_handlers=exc_handlers,
     cors_config=cors_config,
 )
-
