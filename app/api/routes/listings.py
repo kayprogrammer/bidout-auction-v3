@@ -62,7 +62,7 @@ class ListingsView(Controller):
         return ListingsResponseSchema(message="Listings fetched", data=data)
 
     @get(
-        "/{slug:str}",
+        "/detail/{slug:str}",
         summary="Retrieve listing's detail",
         description="This endpoint retrieves detail of a listing",
     )
@@ -198,7 +198,7 @@ class CategoryListingsView(Controller):
 
 
 class BidsView(Controller):
-    path = "/{slug:str}/bids"
+    path = "/detail/{slug:str}/bids"
 
     @get(
         summary="Retrieve bids in a listing",
