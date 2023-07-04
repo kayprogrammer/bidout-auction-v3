@@ -223,7 +223,7 @@ class BidsView(Controller):
         summary="Add a bid to a listing",
         description="This endpoint adds a bid to a particular listing.",
     )
-    async def post(
+    async def create_bid(
         self, slug: str, data: CreateBidSchema, db: AsyncSession, user: User
     ) -> BidResponseSchema:
         listing = await listing_manager.get_by_slug(db, slug)
