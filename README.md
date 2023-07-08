@@ -49,8 +49,7 @@ OR
 ```
 
 ## Docs
-#### API Live Url: [BidOut Docs](https://bidout-litestar-api.cleverapps.io/) 
-#### React Live Url: [BidOut Auction](https://bidout2.netlify.app) 
+#### API Url: [BidOut Docs](http://127.0.0.1:8000/) 
 #### Swagger: [Documentation](https://swagger.io/docs/)
 
 ![alt text](https://github.com/kayprogrammer/bidout-auction-v3/blob/main/display/display1.png?raw=true)
