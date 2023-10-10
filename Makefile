@@ -18,7 +18,7 @@ show-logs:
 	docker-compose logs
 
 serv:
-	uvicorn app.main:app --reload
+	uvicorn app.main:app --reload 
 
 mmig: # run with "make mmig" or "make mmig message='migration message'"
 	if [ -z "$(message)" ]; then \
