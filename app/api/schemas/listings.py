@@ -105,6 +105,7 @@ class ListingsResponseSchema(ResponseSchema):
 
 # ------------------------------------------------------ #
 
+
 # CATEGORIES
 class CategoryDataSchema(BaseModel):
     name: str

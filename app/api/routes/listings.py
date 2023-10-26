@@ -41,7 +41,6 @@ class ListingsView(Controller):
         client: Optional[Union["User", "GuestUser"]],
         quantity: Optional[int],
     ) -> ListingsResponseSchema:
-
         listings = await listing_manager.get_all(db)
         if quantity:
             # Retrieve based on amount

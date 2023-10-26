@@ -1,3 +1,7 @@
+import os, sys
+
+sys.path.append(os.path.abspath("./"))  # To single-handedly execute this script
+
 import uvicorn
 
 if __name__ == "__main__":

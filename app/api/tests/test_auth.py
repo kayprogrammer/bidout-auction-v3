@@ -146,7 +146,6 @@ async def test_login(mocker, client, test_user, database):
 
 
 async def test_refresh_token(mocker, client, database, verified_user):
-
     jwt_obj = await jwt_manager.create(
         database,
         {"user_id": str(verified_user.id), "access": "access", "refresh": "refresh"},
