@@ -30,7 +30,7 @@ class User(BaseModel):
 
     avatar_id: Mapped[GUUID] = Column(
         UUID(),
-        ForeignKey("files.id", ondelete="CASCADE"),
+        ForeignKey("files.id", ondelete="SET NULL"),
         unique=True,
     )
     avatar: Mapped[File] = relationship("File", lazy="joined")
